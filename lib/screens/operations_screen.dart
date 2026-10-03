@@ -123,7 +123,22 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Thêm công trình', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+                Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Quay lại',
+                      onPressed: () => Navigator.of(sheetContext).pop(false),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    ),
+                    const SizedBox(width: 2),
+                    const Expanded(
+                      child: Text(
+                        'Thêm công trình',
+                        style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 14),
                 _CustomerPicker(
                   customers: customers,
