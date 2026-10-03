@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../models/customer.dart';
 import '../services/database_service.dart';
 import '../services/attachment_service.dart';
+import '../utils/constants.dart';
 
 class OperationsScreen extends StatefulWidget {
   final int? customerId;
@@ -89,7 +90,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
   Future<void> _addProject() async {
     final name = TextEditingController();
     final address = TextEditingController();
-    final aluminumType = TextEditingController();
+    String aluminumBrand = aluminumBrands.first;
     final aluminumSystem = TextEditingController();
     final accessory = TextEditingController();
     final dimensions = TextEditingController();
@@ -142,7 +143,14 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   onChanged: (v) => setModalState(() => category = v ?? category),
                 ),
                 const SizedBox(height: 10),
-                TextField(controller: aluminumType, decoration: const InputDecoration(labelText: 'Loại nhôm', hintText: 'VD: Xingfa Quảng Đông')),
+                DropdownButtonFormField<String>(
+                  initialValue: aluminumBrand,
+                  decoration: const InputDecoration(labelText: 'Hãng nhôm'),
+                  items: aluminumBrands
+                      .map((brand) => DropdownMenuItem(value: brand, child: Text(brand)))
+                      .toList(),
+                  onChanged: (value) => setModalState(() => aluminumBrand = value ?? aluminumBrand),
+                ),
                 const SizedBox(height: 10),
                 TextField(controller: aluminumSystem, decoration: const InputDecoration(labelText: 'Hệ nhôm', hintText: 'VD: Hệ 55, hệ 93...')),
                 const SizedBox(height: 10),
@@ -225,7 +233,8 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                       'name': name.text.trim(),
                       'address': address.text.trim(),
                       'category': category,
-                      'aluminum_type': aluminumType.text.trim(),
+                      'aluminum_brand': aluminumBrand,
+                      'aluminum_type': '',
                       'aluminum_system': aluminumSystem.text.trim(),
                       'accessory': accessory.text.trim(),
                       'dimensions': dimensions.text.trim(),
@@ -252,7 +261,6 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
 
     name.dispose();
     address.dispose();
-    aluminumType.dispose();
     aluminumSystem.dispose();
     accessory.dispose();
     dimensions.dispose();
@@ -639,6 +647,8 @@ class _ProjectList extends StatelessWidget {
             subtitle: Text([
               customerName(row['customer_id']),
               (row['category'] ?? '').toString(),
+              if ((row['aluminum_brand'] ?? '').toString().isNotEmpty) (row['aluminum_brand'] ?? '').toString(),
+              if ((row['aluminum_system'] ?? '').toString().isNotEmpty) 'Hệ ' + (row['aluminum_system'] ?? '').toString(),
               (row['status'] ?? '').toString(),
               if ((row['address'] ?? '').toString().isNotEmpty) (row['address'] ?? '').toString(),
             ].join(' • ')),
