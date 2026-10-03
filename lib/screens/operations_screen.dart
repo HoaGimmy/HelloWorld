@@ -431,10 +431,10 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
           : TabBarView(
               controller: tabController,
               children: [
-                _ProjectList(rows: projects, customerName: customerName),
-                _QuoteList(rows: quotes, customerName: customerName, projectName: projectName, money: money),
-                _ContractList(rows: contracts, customerName: customerName, projectName: projectName, payments: payments, money: money),
-                _PaymentList(rows: payments, customerName: customerName, contractCode: contractCode, money: money),
+                _ProjectList(rows: projects, customerName: customerName, onRefresh: _load),
+                _QuoteList(rows: quotes, customerName: customerName, projectName: projectName, money: money, onRefresh: _load),
+                _ContractList(rows: contracts, customerName: customerName, projectName: projectName, payments: payments, money: money, onRefresh: _load),
+                _PaymentList(rows: payments, customerName: customerName, contractCode: contractCode, money: money, onRefresh: _load),
               ],
             ),
     );
@@ -460,12 +460,14 @@ class _CustomerPicker extends StatelessWidget {
 class _ProjectList extends StatelessWidget {
   final List<Map<String, Object?>> rows;
   final String Function(Object?) customerName;
-  const _ProjectList({required this.rows, required this.customerName});
+  final Future<void> Function() onRefresh;
+  const _ProjectList({required this.rows, required this.customerName, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
         empty: 'Chưa có công trình.',
         rows: rows,
+        onRefresh: onRefresh,
         builder: (row) => Card(
           elevation: 0,
           child: ListTile(
@@ -487,12 +489,14 @@ class _QuoteList extends StatelessWidget {
   final String Function(Object?) customerName;
   final String Function(Object?) projectName;
   final NumberFormat money;
-  const _QuoteList({required this.rows, required this.customerName, required this.projectName, required this.money});
+  final Future<void> Function() onRefresh;
+  const _QuoteList({required this.rows, required this.customerName, required this.projectName, required this.money, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
         empty: 'Chưa có báo giá.',
         rows: rows,
+        onRefresh: onRefresh,
         builder: (row) => Card(
           elevation: 0,
           child: ListTile(
@@ -511,12 +515,14 @@ class _ContractList extends StatelessWidget {
   final String Function(Object?) customerName;
   final String Function(Object?) projectName;
   final NumberFormat money;
-  const _ContractList({required this.rows, required this.customerName, required this.projectName, required this.payments, required this.money});
+  final Future<void> Function() onRefresh;
+  const _ContractList({required this.rows, required this.customerName, required this.projectName, required this.payments, required this.money, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
         empty: 'Chưa có hợp đồng.',
         rows: rows,
+        onRefresh: onRefresh,
         builder: (row) {
           final contractId = row['id'];
           final paid = payments.where((p) => p['contract_id'] == contractId).fold<double>(0, (sum, p) => sum + ((p['amount'] ?? 0) as num).toDouble());
@@ -541,12 +547,14 @@ class _PaymentList extends StatelessWidget {
   final String Function(Object?) customerName;
   final String Function(Object?) contractCode;
   final NumberFormat money;
-  const _PaymentList({required this.rows, required this.customerName, required this.contractCode, required this.money});
+  final Future<void> Function() onRefresh;
+  const _PaymentList({required this.rows, required this.customerName, required this.contractCode, required this.money, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
         empty: 'Chưa ghi nhận khoản thu.',
         rows: rows,
+        onRefresh: onRefresh,
         builder: (row) {
           final dt = DateTime.tryParse((row['paid_at'] ?? '').toString());
           return Card(
@@ -566,11 +574,12 @@ class _ListFrame extends StatelessWidget {
   final String empty;
   final List<Map<String, Object?>> rows;
   final Widget Function(Map<String, Object?>) builder;
-  const _ListFrame({required this.empty, required this.rows, required this.builder});
+  final Future<void> Function() onRefresh;
+  const _ListFrame({required this.empty, required this.rows, required this.builder, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) => RefreshIndicator(
-        onRefresh: () async {},
+        onRefresh: onRefresh,
         child: rows.isEmpty
             ? ListView(children: [const SizedBox(height: 130), Center(child: Text(empty))])
             : ListView.builder(
