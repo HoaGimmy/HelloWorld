@@ -8,10 +8,12 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/pipeline_screen.dart';
 import 'widgets/mpwindows_brand.dart';
+import 'services/theme_color_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi_VN');
+  await ThemeColorController.instance.load();
   runApp(const MPWindowsCRMApp());
 }
 
@@ -19,19 +21,22 @@ class MPWindowsCRMApp extends StatelessWidget {
   const MPWindowsCRMApp({super.key});
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'MPWindows CRM',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB07A1B)),
-          inputDecorationTheme: const InputDecorationTheme(isDense: true),
+  Widget build(BuildContext context) => ValueListenableBuilder<Color>(
+        valueListenable: ThemeColorController.instance,
+        builder: (context, seedColor, _) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'MPWindows CRM',
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
+            inputDecorationTheme: const InputDecorationTheme(isDense: true),
+          ),
+          initialRoute: '/',
+          routes: {
+            '/': (_) => const MPWindowsSplashScreen(),
+            '/home': (_) => const HomeScreen(),
+          },
         ),
-        initialRoute: '/',
-        routes: {
-          '/': (_) => const MPWindowsSplashScreen(),
-          '/home': (_) => const HomeScreen(),
-        },
       );
 }
 
