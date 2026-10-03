@@ -2,12 +2,25 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../models/customer.dart';
 import '../services/database_service.dart';
 import '../services/attachment_service.dart';
 import '../utils/constants.dart';
+
+class _VndInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return const TextEditingValue(text: '');
+    final formatted = NumberFormat.decimalPattern('vi_VN').format(int.parse(digits));
+    return TextEditingValue(text: formatted, selection: TextSelection.collapsed(offset: formatted.length));
+  }
+}
+
+String _moneyDigits(String value) => value.replaceAll(RegExp(r'[^0-9]'), '');
 
 class OperationsScreen extends StatefulWidget {
   final int? customerId;
@@ -312,7 +325,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
 
   Future<void> _addQuote([Map<String, Object?>? existing]) async {
     final code = TextEditingController(text: existing == null ? 'BG-${DateFormat('yyyyMMdd-HHmm').format(DateTime.now())}' : (existing['code'] ?? '').toString());
-    final amount = TextEditingController(text: existing == null ? '' : (existing['amount'] ?? '').toString());
+    final amount = TextEditingController(text: existing == null ? '' : NumberFormat.decimalPattern('vi_VN').format(((existing['amount'] as num?) ?? 0).round()));
     final note = TextEditingController(text: (existing?['note'] ?? '').toString());
     int? customerId = existing?['customer_id'] as int? ?? defaultCustomerId();
     int? projectId = existing?['project_id'] as int?;
@@ -356,8 +369,9 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   const SizedBox(height: 10),
                   TextField(
                     controller: amount,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Giá trị báo giá'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [_VndInputFormatter()],
+                    decoration: const InputDecoration(labelText: 'Giá trị báo giá', suffixText: 'VNĐ'),
                   ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
@@ -387,7 +401,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                         'customer_id': customerId,
                         'project_id': projectId,
                         'code': code.text.trim(),
-                        'amount': double.tryParse(amount.text.replaceAll(',', '').trim()) ?? 0,
+                        'amount': double.tryParse(_moneyDigits(amount.text)) ?? 0,
                         'status': status,
                         'valid_until': '',
                         'file_path': filePath ?? '',
@@ -419,7 +433,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
 
   Future<void> _addContract([Map<String, Object?>? existing]) async {
     final code = TextEditingController(text: existing == null ? 'HD-${DateFormat('yyyyMMdd-HHmm').format(DateTime.now())}' : (existing['code'] ?? '').toString());
-    final value = TextEditingController(text: existing == null ? '' : (existing['value'] ?? '').toString());
+    final value = TextEditingController(text: existing == null ? '' : NumberFormat.decimalPattern('vi_VN').format(((existing['value'] as num?) ?? 0).round()));
     final warranty = TextEditingController(text: (existing?['warranty_months'] ?? 12).toString());
     final note = TextEditingController(text: (existing?['note'] ?? '').toString());
     int? customerId = existing?['customer_id'] as int? ?? defaultCustomerId();
@@ -465,8 +479,9 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   const SizedBox(height: 10),
                   TextField(
                     controller: value,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Giá trị hợp đồng'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [_VndInputFormatter()],
+                    decoration: const InputDecoration(labelText: 'Giá trị hợp đồng', suffixText: 'VNĐ'),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -517,7 +532,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                         'customer_id': customerId,
                         'project_id': projectId,
                         'code': code.text.trim(),
-                        'value': double.tryParse(value.text.replaceAll(',', '').trim()) ?? 0,
+                        'value': double.tryParse(_moneyDigits(value.text)) ?? 0,
                         'signed_at': now,
                         'install_date': installDate?.toIso8601String() ?? '',
                         'warranty_months': int.tryParse(warranty.text.trim()) ?? 12,
@@ -555,7 +570,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hãy tạo hợp đồng trước khi thu tiền.')));
       return;
     }
-    final amount = TextEditingController(text: existing == null ? '' : (existing['amount'] ?? '').toString());
+    final amount = TextEditingController(text: existing == null ? '' : NumberFormat.decimalPattern('vi_VN').format(((existing['amount'] as num?) ?? 0).round()));
     final note = TextEditingController(text: (existing?['note'] ?? '').toString());
     int? contractId = existing?['contract_id'] as int? ?? contracts.first['id'] as int?;
     String method = (existing?['method'] ?? 'Chuyển khoản').toString();
@@ -584,7 +599,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   onChanged: (v) => setModalState(() => contractId = v),
                 ),
                 const SizedBox(height: 10),
-                TextField(controller: amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Số tiền thu')),
+                TextField(controller: amount, keyboardType: TextInputType.number, inputFormatters: [_VndInputFormatter()], decoration: const InputDecoration(labelText: 'Số tiền thu', suffixText: 'VNĐ')),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: method,
@@ -603,7 +618,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                     final data = <String, Object?>{
                       'contract_id': contractId,
                       'customer_id': contract['customer_id'],
-                      'amount': double.tryParse(amount.text.replaceAll(',', '').trim()) ?? 0,
+                      'amount': double.tryParse(_moneyDigits(amount.text)) ?? 0,
                       'paid_at': paidAt.toIso8601String(),
                       'method': method,
                       'note': note.text.trim(),
