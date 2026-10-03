@@ -1,8 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/customer.dart';
 import '../services/database_service.dart';
+import '../services/attachment_service.dart';
 
 class OperationsScreen extends StatefulWidget {
   final int? customerId;
@@ -85,12 +89,26 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
   Future<void> _addProject() async {
     final name = TextEditingController();
     final address = TextEditingController();
-    final aluminum = TextEditingController();
+    final aluminumType = TextEditingController();
+    final aluminumSystem = TextEditingController();
     final accessory = TextEditingController();
+    final dimensions = TextEditingController();
+    final quantity = TextEditingController();
     final note = TextEditingController();
     int? customerId = defaultCustomerId();
     String category = 'Cửa nhôm kính';
     String status = 'Chuẩn bị';
+    DateTime? productionDate;
+    DateTime? installDate;
+    final photoPaths = <String>[];
+
+    Future<DateTime?> pickDate(BuildContext context, DateTime? current) =>
+        showDatePicker(
+          context: context,
+          firstDate: DateTime(2020),
+          lastDate: DateTime.now().add(const Duration(days: 3650)),
+          initialDate: current ?? DateTime.now(),
+        );
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -105,7 +123,12 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
               children: [
                 const Text('Thêm công trình', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 14),
-                _CustomerPicker(customers: customers, value: customerId, locked: widget.customerId != null, onChanged: (v) => setModalState(() => customerId = v)),
+                _CustomerPicker(
+                  customers: customers,
+                  value: customerId,
+                  locked: widget.customerId != null,
+                  onChanged: (v) => setModalState(() => customerId = v),
+                ),
                 const SizedBox(height: 10),
                 TextField(controller: name, decoration: const InputDecoration(labelText: 'Tên công trình *')),
                 const SizedBox(height: 10),
@@ -114,20 +137,82 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                 DropdownButtonFormField<String>(
                   initialValue: category,
                   decoration: const InputDecoration(labelText: 'Hạng mục'),
-                  items: const ['Cửa nhôm kính','Vách kính','Mặt dựng','Lam nhôm','Lan can kính','Khác'].map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
+                  items: const ['Cửa nhôm kính','Vách kính','Mặt dựng','Lam nhôm','Lan can kính','Khác']
+                      .map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
                   onChanged: (v) => setModalState(() => category = v ?? category),
                 ),
                 const SizedBox(height: 10),
-                TextField(controller: aluminum, decoration: const InputDecoration(labelText: 'Hệ/loại nhôm')),
+                TextField(controller: aluminumType, decoration: const InputDecoration(labelText: 'Loại nhôm', hintText: 'VD: Xingfa Quảng Đông')),
                 const SizedBox(height: 10),
-                TextField(controller: accessory, decoration: const InputDecoration(labelText: 'Phụ kiện')),
+                TextField(controller: aluminumSystem, decoration: const InputDecoration(labelText: 'Hệ nhôm', hintText: 'VD: Hệ 55, hệ 93...')),
+                const SizedBox(height: 10),
+                TextField(controller: accessory, decoration: const InputDecoration(labelText: 'Phụ kiện', hintText: 'VD: Cmech, Kinlong...')),
+                const SizedBox(height: 10),
+                TextField(controller: dimensions, decoration: const InputDecoration(labelText: 'Kích thước', hintText: 'VD: 1450 x 3000 mm')),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: quantity,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Số lượng'),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final d = await pickDate(context, productionDate);
+                          if (d != null) setModalState(() => productionDate = d);
+                        },
+                        icon: const Icon(Icons.precision_manufacturing_outlined),
+                        label: Text(productionDate == null ? 'Ngày sản xuất' : DateFormat('dd/MM/yyyy').format(productionDate!)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final d = await pickDate(context, installDate);
+                          if (d != null) setModalState(() => installDate = d);
+                        },
+                        icon: const Icon(Icons.event_available_outlined),
+                        label: Text(installDate == null ? 'Ngày lắp đặt' : DateFormat('dd/MM/yyyy').format(installDate!)),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: status,
                   decoration: const InputDecoration(labelText: 'Tiến độ'),
-                  items: const ['Chuẩn bị','Đo đạc','Sản xuất','Lắp đặt','Nghiệm thu','Hoàn thành'].map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
+                  items: const ['Chuẩn bị','Đo đạc','Sản xuất','Lắp đặt','Nghiệm thu','Hoàn thành']
+                      .map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
                   onChanged: (v) => setModalState(() => status = v ?? status),
                 ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final selected = await AttachmentService.pickProjectImages();
+                    if (selected.isNotEmpty) setModalState(() => photoPaths.addAll(selected));
+                  },
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: Text(photoPaths.isEmpty ? 'Thêm hình ảnh công trình' : 'Thêm ảnh khác (${photoPaths.length} ảnh)'),
+                ),
+                if (photoPaths.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 82,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: photoPaths.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder: (_, index) => ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.file(File(photoPaths[index]), width: 82, height: 82, fit: BoxFit.cover),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 10),
                 TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
                 const SizedBox(height: 14),
@@ -140,11 +225,16 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                       'name': name.text.trim(),
                       'address': address.text.trim(),
                       'category': category,
-                      'aluminum_system': aluminum.text.trim(),
+                      'aluminum_type': aluminumType.text.trim(),
+                      'aluminum_system': aluminumSystem.text.trim(),
                       'accessory': accessory.text.trim(),
+                      'dimensions': dimensions.text.trim(),
+                      'quantity': double.tryParse(quantity.text.replaceAll(',', '.').trim()) ?? 0,
                       'status': status,
                       'start_date': now,
-                      'install_date': '',
+                      'production_date': productionDate?.toIso8601String() ?? '',
+                      'install_date': installDate?.toIso8601String() ?? '',
+                      'photo_paths': jsonEncode(photoPaths),
                       'note': note.text.trim(),
                       'created_at': now,
                       'updated_at': now,
@@ -160,17 +250,25 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
       ),
     );
 
-    name.dispose(); address.dispose(); aluminum.dispose(); accessory.dispose(); note.dispose();
+    name.dispose();
+    address.dispose();
+    aluminumType.dispose();
+    aluminumSystem.dispose();
+    accessory.dispose();
+    dimensions.dispose();
+    quantity.dispose();
+    note.dispose();
     if (saved == true) _load();
   }
 
   Future<void> _addQuote() async {
-    final code = TextEditingController(text: 'BG-' + DateFormat('yyyyMMdd-HHmm').format(DateTime.now()));
+    final code = TextEditingController(text: 'BG-${DateFormat('yyyyMMdd-HHmm').format(DateTime.now())}');
     final amount = TextEditingController();
     final note = TextEditingController();
     int? customerId = defaultCustomerId();
     int? projectId;
     String status = 'Nháp';
+    String? filePath;
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -187,7 +285,12 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                 children: [
                   const Text('Tạo báo giá', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 14),
-                  _CustomerPicker(customers: customers, value: customerId, locked: widget.customerId != null, onChanged: (v) => setModalState(() { customerId = v; projectId = null; })),
+                  _CustomerPicker(
+                    customers: customers,
+                    value: customerId,
+                    locked: widget.customerId != null,
+                    onChanged: (v) => setModalState(() { customerId = v; projectId = null; }),
+                  ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<int?>(
                     initialValue: projectId,
@@ -201,13 +304,27 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   const SizedBox(height: 10),
                   TextField(controller: code, decoration: const InputDecoration(labelText: 'Mã báo giá')),
                   const SizedBox(height: 10),
-                  TextField(controller: amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Giá trị báo giá')),
+                  TextField(
+                    controller: amount,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Giá trị báo giá'),
+                  ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
                     initialValue: status,
                     decoration: const InputDecoration(labelText: 'Trạng thái'),
-                    items: const ['Nháp','Đã gửi','Đang thương lượng','Đã duyệt','Từ chối'].map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
+                    items: const ['Nháp','Đã gửi','Đang thương lượng','Đã duyệt','Từ chối']
+                        .map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
                     onChanged: (v) => setModalState(() => status = v ?? status),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final selected = await AttachmentService.pickBusinessDocument();
+                      if (selected != null) setModalState(() => filePath = selected);
+                    },
+                    icon: const Icon(Icons.attach_file),
+                    label: Text(filePath == null ? 'Đính kèm file báo giá' : AttachmentService.fileName(filePath!)),
                   ),
                   const SizedBox(height: 10),
                   TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
@@ -222,6 +339,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                         'amount': double.tryParse(amount.text.replaceAll(',', '').trim()) ?? 0,
                         'status': status,
                         'valid_until': '',
+                        'file_path': filePath ?? '',
                         'note': note.text.trim(),
                         'created_at': DateTime.now().toIso8601String(),
                       });
@@ -237,18 +355,22 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
       ),
     );
 
-    code.dispose(); amount.dispose(); note.dispose();
+    code.dispose();
+    amount.dispose();
+    note.dispose();
     if (saved == true) _load();
   }
 
   Future<void> _addContract() async {
-    final code = TextEditingController(text: 'HD-' + DateFormat('yyyyMMdd-HHmm').format(DateTime.now()));
+    final code = TextEditingController(text: 'HD-${DateFormat('yyyyMMdd-HHmm').format(DateTime.now())}');
     final value = TextEditingController();
     final warranty = TextEditingController(text: '12');
     final note = TextEditingController();
     int? customerId = defaultCustomerId();
     int? projectId;
     String status = 'Đã ký';
+    DateTime? installDate;
+    String? filePath;
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -265,7 +387,12 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                 children: [
                   const Text('Tạo hợp đồng', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 14),
-                  _CustomerPicker(customers: customers, value: customerId, locked: widget.customerId != null, onChanged: (v) => setModalState(() { customerId = v; projectId = null; })),
+                  _CustomerPicker(
+                    customers: customers,
+                    value: customerId,
+                    locked: widget.customerId != null,
+                    onChanged: (v) => setModalState(() { customerId = v; projectId = null; }),
+                  ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<int?>(
                     initialValue: projectId,
@@ -279,15 +406,47 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   const SizedBox(height: 10),
                   TextField(controller: code, decoration: const InputDecoration(labelText: 'Mã hợp đồng')),
                   const SizedBox(height: 10),
-                  TextField(controller: value, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Giá trị hợp đồng')),
+                  TextField(
+                    controller: value,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Giá trị hợp đồng'),
+                  ),
                   const SizedBox(height: 10),
-                  TextField(controller: warranty, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Bảo hành (tháng)')),
+                  TextField(
+                    controller: warranty,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Bảo hành (tháng)'),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final d = await showDatePicker(
+                        context: context,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                        initialDate: installDate ?? DateTime.now(),
+                      );
+                      if (d != null) setModalState(() => installDate = d);
+                    },
+                    icon: const Icon(Icons.event_available_outlined),
+                    label: Text(installDate == null ? 'Ngày lắp đặt' : DateFormat('dd/MM/yyyy').format(installDate!)),
+                  ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
                     initialValue: status,
                     decoration: const InputDecoration(labelText: 'Trạng thái'),
-                    items: const ['Đã ký','Đang thực hiện','Chờ nghiệm thu','Hoàn thành','Hủy'].map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
+                    items: const ['Đã ký','Đang thực hiện','Chờ nghiệm thu','Hoàn thành','Hủy']
+                        .map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
                     onChanged: (v) => setModalState(() => status = v ?? status),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final selected = await AttachmentService.pickBusinessDocument();
+                      if (selected != null) setModalState(() => filePath = selected);
+                    },
+                    icon: const Icon(Icons.attach_file),
+                    label: Text(filePath == null ? 'Đính kèm file hợp đồng' : AttachmentService.fileName(filePath!)),
                   ),
                   const SizedBox(height: 10),
                   TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
@@ -302,9 +461,10 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                         'code': code.text.trim(),
                         'value': double.tryParse(value.text.replaceAll(',', '').trim()) ?? 0,
                         'signed_at': now,
-                        'install_date': '',
+                        'install_date': installDate?.toIso8601String() ?? '',
                         'warranty_months': int.tryParse(warranty.text.trim()) ?? 12,
                         'status': status,
+                        'file_path': filePath ?? '',
                         'note': note.text.trim(),
                         'created_at': now,
                       });
@@ -320,7 +480,10 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
       ),
     );
 
-    code.dispose(); value.dispose(); warranty.dispose(); note.dispose();
+    code.dispose();
+    value.dispose();
+    warranty.dispose();
+    note.dispose();
     if (saved == true) _load();
   }
 
