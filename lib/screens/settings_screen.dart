@@ -14,14 +14,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _hexController;
 
   static const _colors = <Color>[
-    Color(0xFFB07A1B),
-    Color(0xFF8B5E00),
-    Color(0xFF1565C0),
-    Color(0xFF00897B),
-    Color(0xFF2E7D32),
-    Color(0xFF6A1B9A),
-    Color(0xFFC62828),
-    Color(0xFF455A64),
+    Color(0xFFC62828), Color(0xFFEF5350), Color(0xFFF4511E),
+    Color(0xFFFF8F00), Color(0xFFFFB300), Color(0xFFFDD835),
+    Color(0xFF9E9D24), Color(0xFF7CB342), Color(0xFF2E7D32),
+    Color(0xFF00897B), Color(0xFF00A99D), Color(0xFF26A69A),
+    Color(0xFF29B6F6), Color(0xFF0288D1), Color(0xFF1565C0),
+    Color(0xFF283593), Color(0xFF5E35B1), Color(0xFF8E24AA),
+    Color(0xFFD81B60), Color(0xFFEC407A), Color(0xFFF06292),
+    Color(0xFF6D4C41), Color(0xFFB07A1B), Color(0xFF8B5E00),
+    Color(0xFF8D8D8D), Color(0xFF546E7A), Color(0xFF455A64),
     Color(0xFF212121),
   ];
 
@@ -72,11 +73,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Giao diện',
+            'Cá nhân hoá giao diện',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
-          const Text('Chọn màu chủ đạo. Thay đổi được áp dụng ngay cho toàn bộ MPWindows CRM và được lưu cho lần mở sau.'),
+          const Text('Chọn màu sắc theo sở thích. Thay đổi được áp dụng ngay cho toàn bộ MPWindows CRM và được lưu cho lần mở sau.'),
           const SizedBox(height: 18),
           Card(
             elevation: 0,
@@ -133,6 +134,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          Card(
+            elevation: 0,
+            child: ListTile(
+              leading: CircleAvatar(backgroundColor: selected),
+              title: const Text('Khôi phục màu MPWindows'),
+              subtitle: const Text('Quay về màu vàng nâu mặc định'),
+              trailing: const Icon(Icons.restart_alt),
+              onTap: () async {
+                await ThemeColorController.instance.reset();
+                _hexController.text = _hexOf(ThemeColorController.instance.value);
+                if (mounted) setState(() {});
+              },
+            ),
+          ),
+          const SizedBox(height: 28),
           Text(
             'Dữ liệu',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -151,21 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Card(
-            elevation: 0,
-            child: ListTile(
-              leading: CircleAvatar(backgroundColor: selected),
-              title: const Text('Khôi phục màu MPWindows'),
-              subtitle: const Text('Quay về màu vàng nâu mặc định'),
-              trailing: const Icon(Icons.restart_alt),
-              onTap: () async {
-                await ThemeColorController.instance.reset();
-                _hexController.text = _hexOf(ThemeColorController.instance.value);
-                if (mounted) setState(() {});
-              },
-            ),
-          ),
+
         ],
       ),
     );
