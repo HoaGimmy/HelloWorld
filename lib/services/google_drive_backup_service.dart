@@ -52,6 +52,39 @@ class GoogleDriveBackupService {
 
   Future<void> disconnect() => _googleSignIn.disconnect();
 
+  Future<bool> get autoBackupEnabled async =>
+      (await DatabaseService.instance.getSetting('drive_auto_backup_enabled')) == '1';
+
+  Future<void> setAutoBackupEnabled(bool enabled) async {
+    await DatabaseService.instance.setSetting(
+      'drive_auto_backup_enabled',
+      enabled ? '1' : '0',
+    );
+  }
+
+  Future<bool> autoBackupIfDue() async {
+    if (!await autoBackupEnabled) return false;
+
+    final email = await DatabaseService.instance.getSetting('drive_backup_email');
+    if (email == null || email.isEmpty) return false;
+
+    final lastValue =
+        await DatabaseService.instance.getSetting('drive_backup_last_at');
+    final last = DateTime.tryParse(lastValue ?? '')?.toLocal();
+    final now = DateTime.now();
+    if (last != null &&
+        last.year == now.year &&
+        last.month == now.month &&
+        last.day == now.day) {
+      return false;
+    }
+
+    final existing = await _googleSignIn.signInSilently();
+    if (existing == null) return false;
+    await backupToDrive();
+    return true;
+  }
+
   Future<File> createLocalBackup() async {
     final snapshot = await DatabaseService.instance.exportBackupSnapshot();
     final dir = await getApplicationDocumentsDirectory();
@@ -177,5 +210,6 @@ class GoogleDriveBackupService {
         'lastAt': await DatabaseService.instance.getSetting('drive_backup_last_at'),
         'lastFile': await DatabaseService.instance.getSetting('drive_backup_last_file'),
         'email': await DatabaseService.instance.getSetting('drive_backup_email'),
+        'autoEnabled': await autoBackupEnabled ? '1' : '0',
       };
 }
