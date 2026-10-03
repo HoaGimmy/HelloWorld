@@ -42,34 +42,25 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName MPWindows CRM" ios/Runner/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist
       - name: Install official MP Windows app icon
-        continue-on-error: true
         run: |
+          mkdir -p /tmp/mpwindows-icon
+          qlmanage -t -s 1024 -o /tmp/mpwindows-icon assets/branding/mpwindows_logo_dark.svg >/dev/null 2>&1
+          SOURCE="/tmp/mpwindows-icon/mpwindows_logo_dark.svg.png"
+          test -f "$SOURCE"
           python3 - <<'PY'
-          import base64
           import json
           import pathlib
           import subprocess
 
           icon_set = pathlib.Path("ios/Runner/Assets.xcassets/AppIcon.appiconset")
           contents = json.loads((icon_set / "Contents.json").read_text())
-          source = pathlib.Path("/tmp/mpwindows_app_icon.jpg")
-          encoded = pathlib.Path("assets/branding/mpwindows_app_icon.jpg.b64").read_text().strip()
-          source.write_bytes(base64.b64decode(encoded, validate=True))
-
+          source = pathlib.Path("/tmp/mpwindows-icon/mpwindows_logo_dark.svg.png")
           for image in contents.get("images", []):
-              filename = image.get("filename")
-              size = image.get("size")
-              scale = image.get("scale")
+              filename, size, scale = image.get("filename"), image.get("size"), image.get("scale")
               if not filename or not size or not scale:
                   continue
-              points = float(size.split("x")[0])
-              factor = float(scale.rstrip("x"))
-              pixels = str(round(points * factor))
-              subprocess.run(
-                  ["sips", "-s", "format", "png", "-z", pixels, pixels, str(source), "--out", str(icon_set / filename)],
-                  check=True,
-                  stdout=subprocess.DEVNULL,
-              )
+              pixels = str(round(float(size.split("x")[0]) * float(scale.rstrip("x"))))
+              subprocess.run(["sips", "-s", "format", "png", "-z", pixels, pixels, str(source), "--out", str(icon_set / filename)], check=True, stdout=subprocess.DEVNULL)
           PY
       - run: flutter build ios --release --no-codesign
       - name: Package unsigned IPA
