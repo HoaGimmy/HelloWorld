@@ -16,7 +16,7 @@ class DatabaseService {
     final path = dir.path + '/mpwindows_crm.db';
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, _) async {
         await db.execute(
           'CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,phone TEXT,zalo TEXT,address TEXT,source TEXT,stage TEXT,need TEXT,budget REAL DEFAULT 0,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)',
@@ -30,8 +30,19 @@ class DatabaseService {
         await db.execute(
           'CREATE TABLE appointments(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,title TEXT NOT NULL,starts_at TEXT NOT NULL,duration_minutes INTEGER DEFAULT 60,location TEXT,note TEXT,completed INTEGER DEFAULT 0)',
         );
+        await _createBusinessTables(db);
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) await _createBusinessTables(db);
       },
     );
+  }
+
+  static Future<void> _createBusinessTables(Database db) async {
+    await db.execute('CREATE TABLE IF NOT EXISTS projects(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,name TEXT NOT NULL,address TEXT,category TEXT,aluminum_system TEXT,accessory TEXT,status TEXT,start_date TEXT,install_date TEXT,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS quotes(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,amount REAL DEFAULT 0,status TEXT,valid_until TEXT,note TEXT,created_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS contracts(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,value REAL DEFAULT 0,signed_at TEXT,install_date TEXT,warranty_months INTEGER DEFAULT 12,status TEXT,note TEXT,created_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,contract_id INTEGER NOT NULL,customer_id INTEGER NOT NULL,amount REAL DEFAULT 0,paid_at TEXT NOT NULL,method TEXT,note TEXT)');
   }
 
   Future<List<Customer>> getCustomers({String query = ''}) async {
@@ -162,6 +173,64 @@ class DatabaseService {
       whereArgs: [prefix + '%'],
       orderBy: 'starts_at ASC',
     );
+  }
+
+  Future<int> addProject(Map<String, Object?> data) async {
+    final database = await db;
+    return database.insert('projects', data);
+  }
+
+  Future<List<Map<String, Object?>>> getProjects({int? customerId}) async {
+    final database = await db;
+    return database.query('projects', where: customerId == null ? null : 'customer_id = ?', whereArgs: customerId == null ? null : [customerId], orderBy: 'updated_at DESC');
+  }
+
+  Future<int> addQuote(Map<String, Object?> data) async {
+    final database = await db;
+    return database.insert('quotes', data);
+  }
+
+  Future<List<Map<String, Object?>>> getQuotes({int? customerId}) async {
+    final database = await db;
+    return database.query('quotes', where: customerId == null ? null : 'customer_id = ?', whereArgs: customerId == null ? null : [customerId], orderBy: 'created_at DESC');
+  }
+
+  Future<int> addContract(Map<String, Object?> data) async {
+    final database = await db;
+    return database.insert('contracts', data);
+  }
+
+  Future<List<Map<String, Object?>>> getContracts({int? customerId}) async {
+    final database = await db;
+    return database.query('contracts', where: customerId == null ? null : 'customer_id = ?', whereArgs: customerId == null ? null : [customerId], orderBy: 'created_at DESC');
+  }
+
+  Future<int> addPayment(Map<String, Object?> data) async {
+    final database = await db;
+    return database.insert('payments', data);
+  }
+
+  Future<List<Map<String, Object?>>> getPayments({int? customerId, int? contractId}) async {
+    final database = await db;
+    String? where;
+    List<Object?>? args;
+    if (contractId != null) {
+      where = 'contract_id = ?';
+      args = [contractId];
+    } else if (customerId != null) {
+      where = 'customer_id = ?';
+      args = [customerId];
+    }
+    return database.query('payments', where: where, whereArgs: args, orderBy: 'paid_at DESC');
+  }
+
+  Future<Map<String, double>> getFinanceStats() async {
+    final database = await db;
+    final contractRows = await database.rawQuery('SELECT COALESCE(SUM(value),0) AS total FROM contracts');
+    final paymentRows = await database.rawQuery('SELECT COALESCE(SUM(amount),0) AS total FROM payments');
+    final contractValue = ((contractRows.first['total'] ?? 0) as num).toDouble();
+    final paid = ((paymentRows.first['total'] ?? 0) as num).toDouble();
+    return {'contractValue': contractValue, 'paid': paid, 'receivable': contractValue - paid};
   }
 
   Future<Map<String, int>> getCustomerStats() async {
