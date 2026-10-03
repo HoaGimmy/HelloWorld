@@ -94,7 +94,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     final aluminumType = TextEditingController();
     final aluminumSystem = TextEditingController();
     final accessory = TextEditingController();
-    final dimensions = TextEditingController();
+    final areaM2 = TextEditingController();
     final quantity = TextEditingController();
     final note = TextEditingController();
     int? customerId = defaultCustomerId();
@@ -174,18 +174,18 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                     textCapitalization: TextCapitalization.sentences,controller: aluminumType, decoration: const InputDecoration(labelText: 'Loại nhôm', hintText: 'VD: cầu cách nhiệt, slim...')),
                 const SizedBox(height: 10),
                 TextField(
-                    textCapitalization: TextCapitalization.sentences,controller: aluminumSystem, decoration: const InputDecoration(labelText: 'Hệ nhôm', hintText: 'VD: 55, 65, 93...')),
-                const SizedBox(height: 10),
-                TextField(
                     textCapitalization: TextCapitalization.sentences,controller: accessory, decoration: const InputDecoration(labelText: 'Phụ kiện', hintText: 'VD: Cmech, Kinlong...')),
                 const SizedBox(height: 10),
                 TextField(
-                    textCapitalization: TextCapitalization.sentences,controller: dimensions, decoration: const InputDecoration(labelText: 'Kích thước', hintText: 'VD: 1450 x 3000 mm')),
+                  controller: areaM2,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Khối lượng', suffixText: 'm²', hintText: 'VD: 25,5'),
+                ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: quantity,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Số lượng'),
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Số lượng', suffixText: 'bộ'),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -260,10 +260,11 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                       'category': category,
                       'aluminum_brand': aluminumBrand,
                       'aluminum_type': aluminumType.text.trim(),
-                      'aluminum_system': aluminumSystem.text.trim(),
+                      'aluminum_system': '',
                       'accessory': accessory.text.trim(),
-                      'dimensions': dimensions.text.trim(),
-                      'quantity': double.tryParse(quantity.text.replaceAll(',', '.').trim()) ?? 0,
+                      'dimensions': '',
+                      'area_m2': double.tryParse(areaM2.text.replaceAll(',', '.').trim()) ?? 0,
+                      'quantity': int.tryParse(quantity.text.trim()) ?? 0,
                       'status': status,
                       'start_date': now,
                       'production_date': productionDate?.toIso8601String() ?? '',
@@ -289,7 +290,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     aluminumType.dispose();
     aluminumSystem.dispose();
     accessory.dispose();
-    dimensions.dispose();
+    areaM2.dispose();
     quantity.dispose();
     note.dispose();
     if (saved == true) _load();
@@ -680,7 +681,8 @@ class _ProjectList extends StatelessWidget {
               (row['category'] ?? '').toString(),
               if ((row['aluminum_brand'] ?? '').toString().isNotEmpty) (row['aluminum_brand'] ?? '').toString(),
               if ((row['aluminum_type'] ?? '').toString().isNotEmpty) (row['aluminum_type'] ?? '').toString(),
-              if ((row['aluminum_system'] ?? '').toString().isNotEmpty) 'Hệ ' + (row['aluminum_system'] ?? '').toString(),
+              if (((row['area_m2'] ?? 0) as num).toDouble() > 0) NumberFormat.decimalPattern('vi_VN').format(row['area_m2']) + ' m²',
+              if (((row['quantity'] ?? 0) as num).toDouble() > 0) NumberFormat.decimalPattern('vi_VN').format(row['quantity']) + ' bộ',
               (row['status'] ?? '').toString(),
               if ((row['address'] ?? '').toString().isNotEmpty) (row['address'] ?? '').toString(),
             ].join(' • ')),
