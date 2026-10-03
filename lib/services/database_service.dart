@@ -65,6 +65,19 @@ class DatabaseService {
     await addColumn('contracts', 'file_path TEXT');
   }
 
+  static Future<void> _upgradeBusinessTablesV4(Database db) async {
+    try {
+      await db.execute('ALTER TABLE projects ADD COLUMN aluminum_brand TEXT');
+    } catch (_) {
+      // Column already exists.
+    }
+    try {
+      await db.execute("UPDATE projects SET aluminum_brand = aluminum_type WHERE (aluminum_brand IS NULL OR aluminum_brand = '') AND aluminum_type IS NOT NULL AND aluminum_type != ''");
+    } catch (_) {
+      // Keep migration tolerant for fresh installs.
+    }
+  }
+
   Future<List<Customer>> getCustomers({String query = ''}) async {
     final database = await db;
     final q = query.trim();
