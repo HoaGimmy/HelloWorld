@@ -60,7 +60,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final title = TextEditingController();
     final location = TextEditingController();
     final note = TextEditingController();
-    String time = DateFormat('HH:mm').format(DateTime.now());
+    TimeOfDay pickedTime = TimeOfDay.now();
     int duration = 60;
     int? customerId;
 
@@ -93,10 +93,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.access_time),
                   title: const Text('Giờ hẹn'),
-                  subtitle: Text(time),
+                  subtitle: Text(pickedTime.format(context)),
                   onTap: () async {
-                    final t = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                    if (t != null) setModalState(() => time = t.format(context));
+                    final t = await showTimePicker(context: context, initialTime: pickedTime);
+                    if (t != null) setModalState(() => pickedTime = t);
                   },
                 ),
                 DropdownButtonFormField<int>(
@@ -119,12 +119,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   onPressed: title.text.trim().isEmpty
                       ? null
                       : () async {
-                          final parts = time.split(':');
-                          var hour = int.tryParse(parts.first) ?? TimeOfDay.now().hour;
-                          var minute = int.tryParse(parts.last) ?? TimeOfDay.now().minute;
-                          if (time.contains('PM') && hour < 12) hour += 12;
-                          if (time.contains('AM') && hour == 12) hour = 0;
-                          final dt = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, hour, minute);
+                          final dt = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, pickedTime.hour, pickedTime.minute);
                           await DatabaseService.instance.addAppointment(
                             customerId: customerId,
                             title: title.text.trim(),
