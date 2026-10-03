@@ -103,7 +103,7 @@ class ExportService {
     projectsSheet.appendRow([
       TextCellValue('ID'), TextCellValue('Customer ID'), TextCellValue('Tên công trình'),
       TextCellValue('Địa chỉ'), TextCellValue('Hạng mục'), TextCellValue('Hãng nhôm'),
-      TextCellValue('Hệ nhôm'), TextCellValue('Phụ kiện'), TextCellValue('Kích thước'),
+      TextCellValue('Loại nhôm'), TextCellValue('Hệ nhôm'), TextCellValue('Phụ kiện'), TextCellValue('Kích thước'),
       TextCellValue('Số lượng'), TextCellValue('Ngày sản xuất'), TextCellValue('Ngày lắp đặt'),
       TextCellValue('Hình ảnh'), TextCellValue('Tiến độ'), TextCellValue('Ghi chú'),
     ]);
@@ -115,6 +115,7 @@ class ExportService {
         TextCellValue((row['address'] ?? '').toString()),
         TextCellValue((row['category'] ?? '').toString()),
         TextCellValue((row['aluminum_brand'] ?? '').toString()),
+        TextCellValue((row['aluminum_type'] ?? '').toString()),
         TextCellValue((row['aluminum_system'] ?? '').toString()),
         TextCellValue((row['accessory'] ?? '').toString()),
         TextCellValue((row['dimensions'] ?? '').toString()),
