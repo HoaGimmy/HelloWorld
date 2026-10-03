@@ -106,6 +106,64 @@ class DatabaseService {
     );
   }
 
+  Future<int> addTask({int? customerId, required String title, required String dueDate, required String priority, required String note}) async {
+    final database = await db;
+    return database.insert('tasks', {
+      'customer_id': customerId,
+      'title': title,
+      'due_date': dueDate,
+      'priority': priority,
+      'completed': 0,
+      'note': note,
+    });
+  }
+
+  Future<List<Map<String, Object?>>> getTasks({bool onlyOpen = false}) async {
+    final database = await db;
+    final rows = await database.query(
+      'tasks',
+      where: onlyOpen ? 'completed = 0' : null,
+      orderBy: 'completed ASC, due_date ASC',
+    );
+    return rows;
+  }
+
+  Future<int> setTaskCompleted(int id, bool completed) async {
+    final database = await db;
+    return database.update('tasks', {'completed': completed ? 1 : 0}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> addAppointment({
+    int? customerId,
+    required String title,
+    required String startsAt,
+    required int durationMinutes,
+    required String location,
+    required String note,
+  }) async {
+    final database = await db;
+    return database.insert('appointments', {
+      'customer_id': customerId,
+      'title': title,
+      'starts_at': startsAt,
+      'duration_minutes': durationMinutes,
+      'location': location,
+      'note': note,
+      'completed': 0,
+    });
+  }
+
+  Future<List<Map<String, Object?>>> getAppointmentsForDay(DateTime date) async {
+    final database = await db;
+    final prefix = date.toIso8601String().substring(0, 10);
+    return database.query(
+      'appointments',
+      where: 'starts_at LIKE ?',
+      whereArgs: [prefix + '%'],
+      orderBy: 'starts_at ASC',
+    );
+  }
+
   Future<Map<String, int>> getCustomerStats() async {
     final database = await db;
     Future<int> count(String sql) async => Sqflite.firstIntValue(await database.rawQuery(sql)) ?? 0;
