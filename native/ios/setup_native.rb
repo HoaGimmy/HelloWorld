@@ -48,6 +48,24 @@ unless widget
 
   runner.add_dependency(widget)
 
+  embed = runner.copy_files_build_phases.find { |phase| phase.name == 'Embed App Extensions' }
+  embed ||= runner.new_copy_files_build_phase('Embed App Extensions')
+  embed.symbol_dst_subfolder_spec = :plug_ins
+  build_file = embed.add_file_reference(widget.product_reference, true)
+  build_file.settings = {
+    'ATTRIBUTES' => ['CodeSignOnCopy', 'RemoveHeadersOnCopy']
+  }
+
+  # Flutter's Thin Binary phase must run after app extensions are embedded.
+  # Keeping the extension copy phase after Thin Binary creates an Xcode
+  # dependency cycle through Runner.app/Info.plist.
+  thin_binary = runner.build_phases.find do |phase|
+    phase.respond_to?(:name) && phase.name == 'Thin Binary'
+  end
+  if thin_binary
+    runner.build_phases.move(embed, runner.build_phases.index(thin_binary))
+  end
+
 end
 
 widget.product_reference.path = 'MPWindowsWidget.appex'
