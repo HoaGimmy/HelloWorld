@@ -108,7 +108,7 @@ class ExportService {
       ShareParams(
         title: 'Xuất dữ liệu MPWindows CRM',
         text: 'File dữ liệu MPWindows CRM',
-        files: [XFile.fileSystem(path: path)],
+        files: [XFile(path)],
         fileNameOverrides: ['MPWindows_CRM.xlsx'],
       ),
     );
