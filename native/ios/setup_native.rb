@@ -48,13 +48,6 @@ unless widget
 
   runner.add_dependency(widget)
 
-  embed = runner.copy_files_build_phases.find { |phase| phase.name == 'Embed App Extensions' }
-  embed ||= runner.new_copy_files_build_phase('Embed App Extensions')
-  embed.symbol_dst_subfolder_spec = :plug_ins
-  build_file = embed.add_file_reference(widget.product_reference, true)
-  build_file.settings = {
-    'ATTRIBUTES' => ['CodeSignOnCopy', 'RemoveHeadersOnCopy']
-  }
 end
 
 widget.product_reference.path = 'MPWindowsWidget.appex'
