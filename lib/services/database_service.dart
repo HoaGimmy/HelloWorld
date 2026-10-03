@@ -16,7 +16,7 @@ class DatabaseService {
     final path = dir.path + '/mpwindows_crm.db';
     return openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: (db, _) async {
         await db.execute(
           'CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,phone TEXT,zalo TEXT,address TEXT,source TEXT,stage TEXT,need TEXT,budget REAL DEFAULT 0,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)',
@@ -25,7 +25,7 @@ class DatabaseService {
           'CREATE TABLE activities(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,type TEXT,title TEXT NOT NULL,content TEXT,created_at TEXT NOT NULL)',
         );
         await db.execute(
-          'CREATE TABLE tasks(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,title TEXT NOT NULL,due_date TEXT NOT NULL,priority TEXT,completed INTEGER DEFAULT 0,note TEXT)',
+          'CREATE TABLE tasks(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,title TEXT NOT NULL,due_date TEXT NOT NULL,priority TEXT,completed INTEGER DEFAULT 0,note TEXT,reminder_enabled INTEGER DEFAULT 1,reminder_minutes INTEGER DEFAULT 30)',
         );
         await db.execute(
           'CREATE TABLE appointments(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,title TEXT NOT NULL,starts_at TEXT NOT NULL,duration_minutes INTEGER DEFAULT 60,location TEXT,note TEXT,completed INTEGER DEFAULT 0)',
@@ -38,8 +38,14 @@ class DatabaseService {
         if (oldVersion < 3) await _upgradeBusinessTablesV3(db);
         if (oldVersion < 4) await _upgradeBusinessTablesV4(db);
         if (oldVersion < 5) await _createSettingsTable(db);
+        if (oldVersion < 6) await _upgradeTasksV6(db);
       },
     );
+  }
+
+  static Future<void> _upgradeTasksV6(Database db) async {
+    try { await db.execute('ALTER TABLE tasks ADD COLUMN reminder_enabled INTEGER DEFAULT 1'); } catch (_) {}
+    try { await db.execute('ALTER TABLE tasks ADD COLUMN reminder_minutes INTEGER DEFAULT 30'); } catch (_) {}
   }
 
   static Future<void> _createSettingsTable(Database db) async {
@@ -158,7 +164,7 @@ class DatabaseService {
     );
   }
 
-  Future<int> addTask({int? customerId, required String title, required String dueDate, required String priority, required String note}) async {
+  Future<int> addTask({int? customerId, required String title, required String dueDate, required String priority, required String note, bool reminderEnabled = true, int reminderMinutes = 30}) async {
     final database = await db;
     return database.insert('tasks', {
       'customer_id': customerId,
@@ -167,7 +173,23 @@ class DatabaseService {
       'priority': priority,
       'completed': 0,
       'note': note,
+      'reminder_enabled': reminderEnabled ? 1 : 0,
+      'reminder_minutes': reminderMinutes,
     });
+  }
+
+  Future<int> updateTask({required int id, int? customerId, required String title, required String dueDate, required String priority, required bool completed, required String note, required bool reminderEnabled, required int reminderMinutes}) async {
+    final database = await db;
+    return database.update('tasks', {
+      'customer_id': customerId, 'title': title, 'due_date': dueDate,
+      'priority': priority, 'completed': completed ? 1 : 0, 'note': note,
+      'reminder_enabled': reminderEnabled ? 1 : 0, 'reminder_minutes': reminderMinutes,
+    }, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteTask(int id) async {
+    final database = await db;
+    return database.delete('tasks', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, Object?>>> getTasks({bool onlyOpen = false}) async {
@@ -385,7 +407,7 @@ class DatabaseService {
     return {
       'format': 'mpwindows-crm-backup',
       'version': 1,
-      'databaseVersion': 5,
+      'databaseVersion': 6,
       'createdAt': DateTime.now().toIso8601String(),
       'tables': tables,
     };
