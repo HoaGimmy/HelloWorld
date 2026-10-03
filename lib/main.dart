@@ -10,6 +10,7 @@ import 'screens/pipeline_screen.dart';
 import 'widgets/mpwindows_brand.dart';
 import 'services/theme_color_controller.dart';
 import 'services/ios_native_service.dart';
+import 'services/google_drive_backup_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,8 +55,34 @@ class HomeScreen extends StatefulWidget {
   @override State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _runAutoBackup();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _runAutoBackup();
+  }
+
+  Future<void> _runAutoBackup() async {
+    try {
+      await GoogleDriveBackupService.instance.autoBackupIfDue();
+    } catch (_) {
+      // Auto backup must never block opening the CRM. Manual backup shows errors.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
