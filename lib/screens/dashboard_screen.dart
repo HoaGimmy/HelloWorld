@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/database_service.dart';
+import '../services/export_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -9,6 +10,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late Future<Map<String, int>> _future;
+  bool exporting = false;
 
   @override
   void initState() {
@@ -21,13 +23,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await _future;
   }
 
+  Future<void> _export() async {
+    setState(() => exporting = true);
+    try {
+      await ExportService.exportAndShare();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã tạo file Excel và mở bảng chia sẻ.')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xuất Excel lỗi: $e')));
+    } finally {
+      if (mounted) setState(() => exporting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => FutureBuilder<Map<String, int>>(
         future: _future,
         builder: (context, snapshot) {
           final s = snapshot.data ?? const {'total': 0, 'contracts': 0, 'surveys': 0, 'quotes': 0};
           return Scaffold(
-            appBar: AppBar(title: const Text('Tổng quan')),
+            appBar: AppBar(
+              title: const Text('Tổng quan'),
+              actions: [
+                IconButton(
+                  tooltip: 'Xuất Excel',
+                  onPressed: exporting ? null : _export,
+                  icon: exporting ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.file_download_outlined),
+                ),
+              ],
+            ),
             body: RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
@@ -55,9 +78,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Card(
                     elevation: 0,
                     child: ListTile(
+                      leading: Icon(Icons.file_download_outlined, color: Theme.of(context).colorScheme.primary),
+                      title: const Text('Xuất dữ liệu Excel'),
+                      subtitle: const Text('Khách hàng, timeline, công việc và lịch hẹn thành một file XLSX.'),
+                      trailing: FilledButton.tonalIcon(
+                        onPressed: exporting ? null : _export,
+                        icon: const Icon(Icons.ios_share),
+                        label: const Text('Xuất'),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Card(
+                    elevation: 0,
+                    child: ListTile(
                       leading: Icon(Icons.next_plan_outlined, color: Theme.of(context).colorScheme.primary),
                       title: const Text('Bước tiếp theo'),
-                      subtitle: const Text('Thêm pipeline, công việc, lịch hẹn, báo giá và công nợ.'),
+                      subtitle: const Text('Báo giá → hợp đồng → thu tiền → công nợ → công trình.'),
                     ),
                   ),
                 ],
