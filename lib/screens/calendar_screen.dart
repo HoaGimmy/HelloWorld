@@ -97,6 +97,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
                 const SizedBox(height: 14),
                 TextField(
+                    textCapitalization: TextCapitalization.sentences,
                   controller: title,
                   autofocus: !isEditing,
                   decoration: const InputDecoration(labelText: 'Tên lịch hẹn'),
@@ -149,9 +150,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   onChanged: (v) => setModalState(() => duration = v ?? duration),
                 ),
                 const SizedBox(height: 10),
-                TextField(controller: location, decoration: const InputDecoration(labelText: 'Địa điểm')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: location, decoration: const InputDecoration(labelText: 'Địa điểm')),
                 const SizedBox(height: 10),
-                TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
                 const SizedBox(height: 16),
                 FilledButton.icon(
                   onPressed: () async {
