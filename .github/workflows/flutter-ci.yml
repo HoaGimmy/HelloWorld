@@ -29,4 +29,18 @@ jobs:
           channel: stable
       - run: flutter create --platforms=ios .
       - run: flutter pub get
+      - name: Set iOS display name
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName MPWindows CRM" ios/Runner/Info.plist || true
       - run: flutter build ios --release --no-codesign
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p build/unsigned_ipa/Payload
+          cp -R build/ios/iphoneos/Runner.app build/unsigned_ipa/Payload/
+          cd build/unsigned_ipa
+          zip -qry MPWindowsCRM-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MPWindowsCRM-iOS-unsigned
+          path: build/unsigned_ipa/MPWindowsCRM-unsigned.ipa
+          if-no-files-found: error
