@@ -87,21 +87,23 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
 
   int? defaultCustomerId() => widget.customerId ?? (customers.isEmpty ? null : customers.first.id);
 
-  Future<void> _addProject() async {
-    final name = TextEditingController();
-    final address = TextEditingController();
-    String aluminumBrand = aluminumBrands.first;
-    final aluminumType = TextEditingController();
-    final accessory = TextEditingController();
-    final areaM2 = TextEditingController();
-    final quantity = TextEditingController();
-    final note = TextEditingController();
-    int? customerId = defaultCustomerId();
-    String category = 'Cửa nhôm kính';
-    String status = 'Chuẩn bị';
-    DateTime? productionDate;
-    DateTime? installDate;
+  Future<void> _addProject([Map<String, Object?>? existing]) async {
+    final name = TextEditingController(text: (existing?['name'] ?? '').toString());
+    final address = TextEditingController(text: (existing?['address'] ?? '').toString());
+    String aluminumBrand = (existing?['aluminum_brand'] ?? aluminumBrands.first).toString();
+    if (!aluminumBrands.contains(aluminumBrand)) aluminumBrand = aluminumBrands.first;
+    final aluminumType = TextEditingController(text: (existing?['aluminum_type'] ?? '').toString());
+    final accessory = TextEditingController(text: (existing?['accessory'] ?? '').toString());
+    final areaM2 = TextEditingController(text: existing == null ? '' : (existing['area_m2'] ?? '').toString());
+    final quantity = TextEditingController(text: existing == null ? '' : (existing['quantity'] ?? '').toString());
+    final note = TextEditingController(text: (existing?['note'] ?? '').toString());
+    int? customerId = existing?['customer_id'] as int? ?? defaultCustomerId();
+    String category = (existing?['category'] ?? 'Cửa nhôm kính').toString();
+    String status = (existing?['status'] ?? 'Chuẩn bị').toString();
+    DateTime? productionDate = DateTime.tryParse((existing?['production_date'] ?? '').toString());
+    DateTime? installDate = DateTime.tryParse((existing?['install_date'] ?? '').toString());
     final photoPaths = <String>[];
+    try { photoPaths.addAll((jsonDecode((existing?['photo_paths'] ?? '[]').toString()) as List).cast<String>()); } catch (_) {}
 
     Future<DateTime?> pickDate(BuildContext context, DateTime? current) =>
         showDatePicker(
@@ -130,9 +132,9 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                       icon: const Icon(Icons.arrow_back_ios_new_rounded),
                     ),
                     const SizedBox(width: 2),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Thêm công trình',
+                        existing == null ? 'Thêm công trình' : 'Chỉnh sửa công trình',
                         style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -245,6 +247,15 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   ),
                 ],
                 const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final d = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime.now().add(const Duration(days: 3650)), initialDate: paidAt);
+                    if (d != null) setModalState(() => paidAt = DateTime(d.year, d.month, d.day, paidAt.hour, paidAt.minute));
+                  },
+                  icon: const Icon(Icons.calendar_today_outlined),
+                  label: Text('Ngày thu: ${DateFormat('dd/MM/yyyy').format(paidAt)}'),
+                ),
+                const SizedBox(height: 10),
                 TextField(
                     textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
                 const SizedBox(height: 14),
@@ -252,7 +263,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   onPressed: () async {
                     if (customerId == null || name.text.trim().isEmpty) return;
                     final now = DateTime.now().toIso8601String();
-                    await DatabaseService.instance.addProject({
+                    final data = <String, Object?>{
                       'customer_id': customerId,
                       'name': name.text.trim(),
                       'address': address.text.trim(),
@@ -270,9 +281,14 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                       'install_date': installDate?.toIso8601String() ?? '',
                       'photo_paths': jsonEncode(photoPaths),
                       'note': note.text.trim(),
-                      'created_at': now,
+                      'created_at': existing?['created_at'] ?? now,
                       'updated_at': now,
-                    });
+                    };
+                    if (existing == null) {
+                      await DatabaseService.instance.addProject(data);
+                    } else {
+                      await DatabaseService.instance.updateProject(existing['id'] as int, data);
+                    }
                     if (sheetContext.mounted) Navigator.pop(sheetContext, true);
                   },
                   child: const Text('Lưu công trình'),
@@ -294,14 +310,14 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     if (saved == true) _load();
   }
 
-  Future<void> _addQuote() async {
-    final code = TextEditingController(text: 'BG-${DateFormat('yyyyMMdd-HHmm').format(DateTime.now())}');
-    final amount = TextEditingController();
-    final note = TextEditingController();
-    int? customerId = defaultCustomerId();
-    int? projectId;
-    String status = 'Nháp';
-    String? filePath;
+  Future<void> _addQuote([Map<String, Object?>? existing]) async {
+    final code = TextEditingController(text: existing == null ? 'BG-${DateFormat('yyyyMMdd-HHmm').format(DateTime.now())}' : (existing['code'] ?? '').toString());
+    final amount = TextEditingController(text: existing == null ? '' : (existing['amount'] ?? '').toString());
+    final note = TextEditingController(text: (existing?['note'] ?? '').toString());
+    int? customerId = existing?['customer_id'] as int? ?? defaultCustomerId();
+    int? projectId = existing?['project_id'] as int?;
+    String status = (existing?['status'] ?? 'Nháp').toString();
+    String? filePath = (existing?['file_path'] ?? '').toString();
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -316,7 +332,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Tạo báo giá', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+                  Text(existing == null ? 'Tạo báo giá' : 'Chỉnh sửa báo giá', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 14),
                   _CustomerPicker(
                     customers: customers,
@@ -367,7 +383,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   FilledButton(
                     onPressed: () async {
                       if (customerId == null || code.text.trim().isEmpty) return;
-                      await DatabaseService.instance.addQuote({
+                      final data = <String, Object?>{
                         'customer_id': customerId,
                         'project_id': projectId,
                         'code': code.text.trim(),
@@ -376,8 +392,13 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                         'valid_until': '',
                         'file_path': filePath ?? '',
                         'note': note.text.trim(),
-                        'created_at': DateTime.now().toIso8601String(),
-                      });
+                        'created_at': existing?['created_at'] ?? DateTime.now().toIso8601String(),
+                      };
+                      if (existing == null) {
+                        await DatabaseService.instance.addQuote(data);
+                      } else {
+                        await DatabaseService.instance.updateQuote(existing['id'] as int, data);
+                      }
                       if (sheetContext.mounted) Navigator.pop(sheetContext, true);
                     },
                     child: const Text('Lưu báo giá'),
@@ -396,16 +417,16 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     if (saved == true) _load();
   }
 
-  Future<void> _addContract() async {
-    final code = TextEditingController(text: 'HD-${DateFormat('yyyyMMdd-HHmm').format(DateTime.now())}');
-    final value = TextEditingController();
-    final warranty = TextEditingController(text: '12');
-    final note = TextEditingController();
-    int? customerId = defaultCustomerId();
-    int? projectId;
-    String status = 'Đã ký';
-    DateTime? installDate;
-    String? filePath;
+  Future<void> _addContract([Map<String, Object?>? existing]) async {
+    final code = TextEditingController(text: existing == null ? 'HD-${DateFormat('yyyyMMdd-HHmm').format(DateTime.now())}' : (existing['code'] ?? '').toString());
+    final value = TextEditingController(text: existing == null ? '' : (existing['value'] ?? '').toString());
+    final warranty = TextEditingController(text: (existing?['warranty_months'] ?? 12).toString());
+    final note = TextEditingController(text: (existing?['note'] ?? '').toString());
+    int? customerId = existing?['customer_id'] as int? ?? defaultCustomerId();
+    int? projectId = existing?['project_id'] as int?;
+    String status = (existing?['status'] ?? 'Đã ký').toString();
+    DateTime? installDate = DateTime.tryParse((existing?['install_date'] ?? '').toString());
+    String? filePath = (existing?['file_path'] ?? '').toString();
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -420,7 +441,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Tạo hợp đồng', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+                  Text(existing == null ? 'Tạo hợp đồng' : 'Chỉnh sửa hợp đồng', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 14),
                   _CustomerPicker(
                     customers: customers,
@@ -492,7 +513,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                     onPressed: () async {
                       if (customerId == null || code.text.trim().isEmpty) return;
                       final now = DateTime.now().toIso8601String();
-                      await DatabaseService.instance.addContract({
+                      final data = <String, Object?>{
                         'customer_id': customerId,
                         'project_id': projectId,
                         'code': code.text.trim(),
@@ -503,8 +524,13 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                         'status': status,
                         'file_path': filePath ?? '',
                         'note': note.text.trim(),
-                        'created_at': now,
-                      });
+                        'created_at': existing?['created_at'] ?? now,
+                      };
+                      if (existing == null) {
+                        await DatabaseService.instance.addContract(data);
+                      } else {
+                        await DatabaseService.instance.updateContract(existing['id'] as int, data);
+                      }
                       if (sheetContext.mounted) Navigator.pop(sheetContext, true);
                     },
                     child: const Text('Lưu hợp đồng'),
@@ -524,15 +550,16 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     if (saved == true) _load();
   }
 
-  Future<void> _addPayment() async {
+  Future<void> _addPayment([Map<String, Object?>? existing]) async {
     if (contracts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hãy tạo hợp đồng trước khi thu tiền.')));
       return;
     }
-    final amount = TextEditingController();
-    final note = TextEditingController();
-    int? contractId = contracts.first['id'] as int?;
-    String method = 'Chuyển khoản';
+    final amount = TextEditingController(text: existing == null ? '' : (existing['amount'] ?? '').toString());
+    final note = TextEditingController(text: (existing?['note'] ?? '').toString());
+    int? contractId = existing?['contract_id'] as int? ?? contracts.first['id'] as int?;
+    String method = (existing?['method'] ?? 'Chuyển khoản').toString();
+    DateTime paidAt = DateTime.tryParse((existing?['paid_at'] ?? '').toString()) ?? DateTime.now();
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -545,7 +572,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Ghi nhận thu tiền', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+                Text(existing == null ? 'Ghi nhận thu tiền' : 'Chỉnh sửa khoản thu', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<int?>(
                   initialValue: contractId,
@@ -573,14 +600,19 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   onPressed: () async {
                     if (contractId == null) return;
                     final contract = contracts.firstWhere((c) => c['id'] == contractId);
-                    await DatabaseService.instance.addPayment({
+                    final data = <String, Object?>{
                       'contract_id': contractId,
                       'customer_id': contract['customer_id'],
                       'amount': double.tryParse(amount.text.replaceAll(',', '').trim()) ?? 0,
-                      'paid_at': DateTime.now().toIso8601String(),
+                      'paid_at': paidAt.toIso8601String(),
                       'method': method,
                       'note': note.text.trim(),
-                    });
+                    };
+                    if (existing == null) {
+                      await DatabaseService.instance.addPayment(data);
+                    } else {
+                      await DatabaseService.instance.updatePayment(existing['id'] as int, data);
+                    }
                     if (sheetContext.mounted) Navigator.pop(sheetContext, true);
                   },
                   child: const Text('Lưu khoản thu'),
@@ -632,10 +664,10 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
           : TabBarView(
               controller: tabController,
               children: [
-                _ProjectList(rows: projects, customerName: customerName, onRefresh: _load),
-                _QuoteList(rows: quotes, customerName: customerName, projectName: projectName, money: money, onRefresh: _load),
-                _ContractList(rows: contracts, customerName: customerName, projectName: projectName, payments: payments, money: money, onRefresh: _load),
-                _PaymentList(rows: payments, customerName: customerName, contractCode: contractCode, money: money, onRefresh: _load),
+                _ProjectList(rows: projects, customerName: customerName, onRefresh: _load, onEdit: _addProject),
+                _QuoteList(rows: quotes, customerName: customerName, projectName: projectName, money: money, onRefresh: _load, onEdit: _addQuote),
+                _ContractList(rows: contracts, customerName: customerName, projectName: projectName, payments: payments, money: money, onRefresh: _load, onEdit: _addContract),
+                _PaymentList(rows: payments, customerName: customerName, contractCode: contractCode, money: money, onRefresh: _load, onEdit: _addPayment),
               ],
             ),
     );
@@ -661,8 +693,9 @@ class _CustomerPicker extends StatelessWidget {
 class _ProjectList extends StatelessWidget {
   final List<Map<String, Object?>> rows;
   final String Function(Object?) customerName;
+  final Future<void> Function(Map<String, Object?>) onEdit;
   final Future<void> Function() onRefresh;
-  const _ProjectList({required this.rows, required this.customerName, required this.onRefresh});
+  const _ProjectList({required this.rows, required this.customerName, required this.onRefresh, required this.onEdit});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
@@ -672,6 +705,7 @@ class _ProjectList extends StatelessWidget {
         builder: (row) => Card(
           elevation: 0,
           child: ListTile(
+            onTap: () => onEdit(row),
             leading: const CircleAvatar(child: Icon(Icons.home_work_outlined)),
             title: Text((row['name'] ?? '').toString(), style: const TextStyle(fontWeight: FontWeight.w700)),
             subtitle: Text([
@@ -694,8 +728,9 @@ class _QuoteList extends StatelessWidget {
   final String Function(Object?) customerName;
   final String Function(Object?) projectName;
   final NumberFormat money;
+  final Future<void> Function(Map<String, Object?>) onEdit;
   final Future<void> Function() onRefresh;
-  const _QuoteList({required this.rows, required this.customerName, required this.projectName, required this.money, required this.onRefresh});
+  const _QuoteList({required this.rows, required this.customerName, required this.projectName, required this.money, required this.onRefresh, required this.onEdit});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
@@ -705,6 +740,7 @@ class _QuoteList extends StatelessWidget {
         builder: (row) => Card(
           elevation: 0,
           child: ListTile(
+            onTap: () => onEdit(row),
             leading: const CircleAvatar(child: Icon(Icons.receipt_long_outlined)),
             title: Text((row['code'] ?? '').toString(), style: const TextStyle(fontWeight: FontWeight.w700)),
             subtitle: Text(customerName(row['customer_id']) + ' • ' + projectName(row['project_id']) + ' • ' + (row['status'] ?? '').toString()),
@@ -720,8 +756,9 @@ class _ContractList extends StatelessWidget {
   final String Function(Object?) customerName;
   final String Function(Object?) projectName;
   final NumberFormat money;
+  final Future<void> Function(Map<String, Object?>) onEdit;
   final Future<void> Function() onRefresh;
-  const _ContractList({required this.rows, required this.customerName, required this.projectName, required this.payments, required this.money, required this.onRefresh});
+  const _ContractList({required this.rows, required this.customerName, required this.projectName, required this.payments, required this.money, required this.onRefresh, required this.onEdit});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
@@ -736,6 +773,7 @@ class _ContractList extends StatelessWidget {
           return Card(
             elevation: 0,
             child: ListTile(
+              onTap: () => onEdit(row),
               leading: const CircleAvatar(child: Icon(Icons.handshake_outlined)),
               title: Text((row['code'] ?? '').toString(), style: const TextStyle(fontWeight: FontWeight.w700)),
               subtitle: Text(customerName(row['customer_id']) + ' • ' + projectName(row['project_id']) + '\nĐã thu ' + money.format(paid) + 'đ • Còn ' + money.format(debt < 0 ? 0 : debt) + 'đ'),
@@ -752,8 +790,9 @@ class _PaymentList extends StatelessWidget {
   final String Function(Object?) customerName;
   final String Function(Object?) contractCode;
   final NumberFormat money;
+  final Future<void> Function(Map<String, Object?>) onEdit;
   final Future<void> Function() onRefresh;
-  const _PaymentList({required this.rows, required this.customerName, required this.contractCode, required this.money, required this.onRefresh});
+  const _PaymentList({required this.rows, required this.customerName, required this.contractCode, required this.money, required this.onRefresh, required this.onEdit});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
@@ -765,6 +804,7 @@ class _PaymentList extends StatelessWidget {
           return Card(
             elevation: 0,
             child: ListTile(
+              onTap: () => onEdit(row),
               leading: const CircleAvatar(child: Icon(Icons.payments_outlined)),
               title: Text(money.format(((row['amount'] ?? 0) as num).toDouble()) + 'đ', style: const TextStyle(fontWeight: FontWeight.w800)),
               subtitle: Text(customerName(row['customer_id']) + ' • ' + contractCode(row['contract_id']) + ' • ' + (row['method'] ?? '').toString()),
