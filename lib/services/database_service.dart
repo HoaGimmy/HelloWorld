@@ -364,6 +364,77 @@ class DatabaseService {
     );
   }
 
+  static const backupTables = <String>[
+    'customers',
+    'activities',
+    'tasks',
+    'appointments',
+    'projects',
+    'quotes',
+    'contracts',
+    'payments',
+    'app_settings',
+  ];
+
+  Future<Map<String, Object?>> exportBackupSnapshot() async {
+    final database = await db;
+    final tables = <String, Object?>{};
+    for (final table in backupTables) {
+      tables[table] = await database.query(table);
+    }
+    return {
+      'format': 'mpwindows-crm-backup',
+      'version': 1,
+      'databaseVersion': 5,
+      'createdAt': DateTime.now().toIso8601String(),
+      'tables': tables,
+    };
+  }
+
+  Future<void> restoreBackupSnapshot(Map<String, dynamic> snapshot) async {
+    if (snapshot['format'] != 'mpwindows-crm-backup') {
+      throw const FormatException('File không phải bản sao lưu MPWindows CRM.');
+    }
+    final rawTables = snapshot['tables'];
+    if (rawTables is! Map) {
+      throw const FormatException('Bản sao lưu thiếu dữ liệu.');
+    }
+
+    final database = await db;
+    await database.transaction((txn) async {
+      // Delete children first to keep this safe if foreign keys are enabled later.
+      for (final table in backupTables.reversed) {
+        await txn.delete(table);
+      }
+      for (final table in backupTables) {
+        final rows = rawTables[table];
+        if (rows is! List) continue;
+        for (final row in rows) {
+          if (row is Map) {
+            await txn.insert(
+              table,
+              Map<String, Object?>.from(row),
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
+          }
+        }
+      }
+    });
+  }
+
+  Future<Map<String, int>> getBackupCounts() async {
+    final database = await db;
+    final result = <String, int>{};
+    for (final table in backupTables) {
+      result[table] =
+          Sqflite.firstIntValue(
+            await database.rawQuery('SELECT COUNT(*) FROM $table'),
+          ) ??
+          0;
+    }
+    return result;
+  }
+
   Future<Map<String, int>> getCustomerStats({int? year, int? month}) async {
     final database = await db;
     final pattern = year == null ? null : _periodPattern(year: year, month: month);
