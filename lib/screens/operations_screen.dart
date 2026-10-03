@@ -147,9 +147,11 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   onChanged: (v) => setModalState(() => customerId = v),
                 ),
                 const SizedBox(height: 10),
-                TextField(controller: name, decoration: const InputDecoration(labelText: 'Tên công trình *')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: name, decoration: const InputDecoration(labelText: 'Tên công trình *')),
                 const SizedBox(height: 10),
-                TextField(controller: address, decoration: const InputDecoration(labelText: 'Địa chỉ công trình')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: address, decoration: const InputDecoration(labelText: 'Địa chỉ công trình')),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: category,
@@ -168,13 +170,17 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   onChanged: (value) => setModalState(() => aluminumBrand = value ?? aluminumBrand),
                 ),
                 const SizedBox(height: 10),
-                TextField(controller: aluminumType, decoration: const InputDecoration(labelText: 'Loại nhôm', hintText: 'VD: cầu cách nhiệt, slim...')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: aluminumType, decoration: const InputDecoration(labelText: 'Loại nhôm', hintText: 'VD: cầu cách nhiệt, slim...')),
                 const SizedBox(height: 10),
-                TextField(controller: aluminumSystem, decoration: const InputDecoration(labelText: 'Hệ nhôm', hintText: 'VD: 55, 65, 93...')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: aluminumSystem, decoration: const InputDecoration(labelText: 'Hệ nhôm', hintText: 'VD: 55, 65, 93...')),
                 const SizedBox(height: 10),
-                TextField(controller: accessory, decoration: const InputDecoration(labelText: 'Phụ kiện', hintText: 'VD: Cmech, Kinlong...')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: accessory, decoration: const InputDecoration(labelText: 'Phụ kiện', hintText: 'VD: Cmech, Kinlong...')),
                 const SizedBox(height: 10),
-                TextField(controller: dimensions, decoration: const InputDecoration(labelText: 'Kích thước', hintText: 'VD: 1450 x 3000 mm')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: dimensions, decoration: const InputDecoration(labelText: 'Kích thước', hintText: 'VD: 1450 x 3000 mm')),
                 const SizedBox(height: 10),
                 TextField(
                   controller: quantity,
@@ -240,7 +246,8 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   ),
                 ],
                 const SizedBox(height: 10),
-                TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
                 const SizedBox(height: 14),
                 FilledButton(
                   onPressed: () async {
@@ -329,7 +336,8 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                     onChanged: (v) => setModalState(() => projectId = v),
                   ),
                   const SizedBox(height: 10),
-                  TextField(controller: code, decoration: const InputDecoration(labelText: 'Mã báo giá')),
+                  TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: code, decoration: const InputDecoration(labelText: 'Mã báo giá')),
                   const SizedBox(height: 10),
                   TextField(
                     controller: amount,
@@ -354,7 +362,8 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                     label: Text(filePath == null ? 'Đính kèm file báo giá' : AttachmentService.fileName(filePath!)),
                   ),
                   const SizedBox(height: 10),
-                  TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
+                  TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
                   const SizedBox(height: 14),
                   FilledButton(
                     onPressed: () async {
@@ -431,7 +440,8 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                     onChanged: (v) => setModalState(() => projectId = v),
                   ),
                   const SizedBox(height: 10),
-                  TextField(controller: code, decoration: const InputDecoration(labelText: 'Mã hợp đồng')),
+                  TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: code, decoration: const InputDecoration(labelText: 'Mã hợp đồng')),
                   const SizedBox(height: 10),
                   TextField(
                     controller: value,
@@ -476,7 +486,8 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                     label: Text(filePath == null ? 'Đính kèm file hợp đồng' : AttachmentService.fileName(filePath!)),
                   ),
                   const SizedBox(height: 10),
-                  TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
+                  TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
                   const SizedBox(height: 14),
                   FilledButton(
                     onPressed: () async {
@@ -556,7 +567,8 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   onChanged: (v) => setModalState(() => method = v ?? method),
                 ),
                 const SizedBox(height: 10),
-                TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
+                TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
                 const SizedBox(height: 14),
                 FilledButton(
                   onPressed: () async {
