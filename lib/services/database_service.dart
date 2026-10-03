@@ -292,6 +292,11 @@ class DatabaseService {
     return database.insert('projects', data);
   }
 
+  Future<int> updateProject(int id, Map<String, Object?> data) async {
+    final database = await db;
+    return database.update('projects', data, where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<List<Map<String, Object?>>> getProjects({int? customerId}) async {
     final database = await db;
     return database.query('projects', where: customerId == null ? null : 'customer_id = ?', whereArgs: customerId == null ? null : [customerId], orderBy: 'updated_at DESC');
@@ -300,6 +305,11 @@ class DatabaseService {
   Future<int> addQuote(Map<String, Object?> data) async {
     final database = await db;
     return database.insert('quotes', data);
+  }
+
+  Future<int> updateQuote(int id, Map<String, Object?> data) async {
+    final database = await db;
+    return database.update('quotes', data, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, Object?>>> getQuotes({int? customerId}) async {
@@ -312,6 +322,11 @@ class DatabaseService {
     return database.insert('contracts', data);
   }
 
+  Future<int> updateContract(int id, Map<String, Object?> data) async {
+    final database = await db;
+    return database.update('contracts', data, where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<List<Map<String, Object?>>> getContracts({int? customerId}) async {
     final database = await db;
     return database.query('contracts', where: customerId == null ? null : 'customer_id = ?', whereArgs: customerId == null ? null : [customerId], orderBy: 'created_at DESC');
@@ -320,6 +335,11 @@ class DatabaseService {
   Future<int> addPayment(Map<String, Object?> data) async {
     final database = await db;
     return database.insert('payments', data);
+  }
+
+  Future<int> updatePayment(int id, Map<String, Object?> data) async {
+    final database = await db;
+    return database.update('payments', data, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, Object?>>> getPayments({int? customerId, int? contractId}) async {
