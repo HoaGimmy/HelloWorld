@@ -91,6 +91,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     final name = TextEditingController();
     final address = TextEditingController();
     String aluminumBrand = aluminumBrands.first;
+    final aluminumType = TextEditingController();
     final aluminumSystem = TextEditingController();
     final accessory = TextEditingController();
     final dimensions = TextEditingController();
@@ -152,7 +153,9 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   onChanged: (value) => setModalState(() => aluminumBrand = value ?? aluminumBrand),
                 ),
                 const SizedBox(height: 10),
-                TextField(controller: aluminumSystem, decoration: const InputDecoration(labelText: 'Hệ nhôm', hintText: 'VD: Hệ 55, hệ 93...')),
+                TextField(controller: aluminumType, decoration: const InputDecoration(labelText: 'Loại nhôm', hintText: 'VD: cầu cách nhiệt, slim...')),
+                const SizedBox(height: 10),
+                TextField(controller: aluminumSystem, decoration: const InputDecoration(labelText: 'Hệ nhôm', hintText: 'VD: 55, 65, 93...')),
                 const SizedBox(height: 10),
                 TextField(controller: accessory, decoration: const InputDecoration(labelText: 'Phụ kiện', hintText: 'VD: Cmech, Kinlong...')),
                 const SizedBox(height: 10),
@@ -234,7 +237,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                       'address': address.text.trim(),
                       'category': category,
                       'aluminum_brand': aluminumBrand,
-                      'aluminum_type': '',
+                      'aluminum_type': aluminumType.text.trim(),
                       'aluminum_system': aluminumSystem.text.trim(),
                       'accessory': accessory.text.trim(),
                       'dimensions': dimensions.text.trim(),
@@ -261,6 +264,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
 
     name.dispose();
     address.dispose();
+    aluminumType.dispose();
     aluminumSystem.dispose();
     accessory.dispose();
     dimensions.dispose();
@@ -648,6 +652,7 @@ class _ProjectList extends StatelessWidget {
               customerName(row['customer_id']),
               (row['category'] ?? '').toString(),
               if ((row['aluminum_brand'] ?? '').toString().isNotEmpty) (row['aluminum_brand'] ?? '').toString(),
+              if ((row['aluminum_type'] ?? '').toString().isNotEmpty) (row['aluminum_type'] ?? '').toString(),
               if ((row['aluminum_system'] ?? '').toString().isNotEmpty) 'Hệ ' + (row['aluminum_system'] ?? '').toString(),
               (row['status'] ?? '').toString(),
               if ((row['address'] ?? '').toString().isNotEmpty) (row['address'] ?? '').toString(),
