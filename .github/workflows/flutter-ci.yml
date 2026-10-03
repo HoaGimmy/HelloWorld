@@ -44,8 +44,8 @@ jobs:
       - name: Install official MP Windows app icon
         run: |
           mkdir -p /tmp/mpwindows-icon
-          qlmanage -t -s 1024 -o /tmp/mpwindows-icon assets/branding/mpwindows_logo_dark.svg >/dev/null 2>&1
-          SOURCE="/tmp/mpwindows-icon/mpwindows_logo_dark.svg.png"
+          qlmanage -t -s 1024 -o /tmp/mpwindows-icon assets/branding/mpwindows_app_icon.svg >/dev/null 2>&1
+          SOURCE="/tmp/mpwindows-icon/mpwindows_app_icon.svg.png"
           test -f "$SOURCE"
           python3 - <<'PY'
           import json
@@ -54,7 +54,7 @@ jobs:
 
           icon_set = pathlib.Path("ios/Runner/Assets.xcassets/AppIcon.appiconset")
           contents = json.loads((icon_set / "Contents.json").read_text())
-          source = pathlib.Path("/tmp/mpwindows-icon/mpwindows_logo_dark.svg.png")
+          source = pathlib.Path("/tmp/mpwindows-icon/mpwindows_app_icon.svg.png")
           for image in contents.get("images", []):
               filename, size, scale = image.get("filename"), image.get("size"), image.get("scale")
               if not filename or not size or not scale:
