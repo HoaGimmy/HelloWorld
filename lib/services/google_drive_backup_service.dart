@@ -148,7 +148,7 @@ class GoogleDriveBackupService {
   }
 
   Future<File?> chooseBackupFile() async {
-    final picked = await FilePicker.platform.pickFiles(
+    final picked = await FilePicker().pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
     );
