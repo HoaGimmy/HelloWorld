@@ -2,6 +2,17 @@ import 'package:flutter/material.dart';
 
 const pipelineStages = <String>['Khách mới','Đã liên hệ','Đang tư vấn','Khảo sát','Báo giá','Đàm phán','Chốt hợp đồng','Thi công','Hoàn thành','Chăm sóc sau bán'];
 const leadSources = <String>['Facebook','TikTok','Zalo','Website','Giới thiệu','Khách cũ','Khác'];
+const aluminumBrands = <String>[
+  'Xingfa Việt Nam',
+  'Xingfa Quảng Đông',
+  'Xingfa Class A',
+  'Hopo',
+  'Maxpro',
+  'Romadio',
+  'Civro',
+  'Gand Luxury',
+  'PMI',
+];
 
 Color stageColor(String stage, ThemeData theme) => switch(stage) {
  'Khách mới' => theme.colorScheme.primary,
