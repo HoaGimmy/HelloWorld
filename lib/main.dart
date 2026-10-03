@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 
 import 'screens/customers_screen.dart';
+import 'screens/calendar_screen.dart';
+import 'screens/tasks_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/pipeline_screen.dart';
 
-void main() => runApp(const MPWindowsCRMApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('vi_VN');
+  runApp(const MPWindowsCRMApp());
+}
 
 class MPWindowsCRMApp extends StatelessWidget {
   const MPWindowsCRMApp({super.key});
@@ -36,8 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
       const DashboardScreen(),
       const CustomersScreen(),
       const PipelineScreen(),
-      const _SimplePage(title: 'Công việc', icon: Icons.checklist_outlined, message: 'Quản lý deadline và giao việc.'),
-      const _SimplePage(title: 'Lịch hẹn', icon: Icons.event_outlined, message: 'Lịch khảo sát và gặp khách.'),
+      const TasksScreen(),
+      const CalendarScreen(),
     ];
 
     return Scaffold(
