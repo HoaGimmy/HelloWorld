@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/activity.dart';
 import '../models/customer.dart';
@@ -328,6 +330,38 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
+  String _phoneForAction(String phone) =>
+      phone.replaceAll(RegExp(r'[^0-9+]'), '');
+
+  Future<void> _copyPhone(String phone) async {
+    await Clipboard.setData(ClipboardData(text: phone));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Đã sao chép số điện thoại'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _openPhoneAction(String scheme, String phone) async {
+    final cleanPhone = _phoneForAction(phone);
+    if (cleanPhone.isEmpty) return;
+    final uri = Uri(scheme: scheme, path: cleanPhone);
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            scheme == 'tel'
+                ? 'Không thể mở ứng dụng Điện thoại.'
+                : 'Không thể mở ứng dụng Tin nhắn.',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _addActivity() async {
     final title = TextEditingController();
     final content = TextEditingController();
@@ -411,7 +445,35 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       const SizedBox(width: 14),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(c.name, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w800)),
-                        Text(c.phone.isEmpty ? 'Chưa có số điện thoại' : c.phone),
+                        if (c.phone.isEmpty)
+                          const Text('Chưa có số điện thoại')
+                        else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  c.phone,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              _PhoneActionButton(
+                                tooltip: 'Sao chép số',
+                                icon: Icons.copy_outlined,
+                                onPressed: () => _copyPhone(c.phone),
+                              ),
+                              _PhoneActionButton(
+                                tooltip: 'Gọi điện',
+                                icon: Icons.phone_outlined,
+                                onPressed: () => _openPhoneAction('tel', c.phone),
+                              ),
+                              _PhoneActionButton(
+                                tooltip: 'Nhắn tin',
+                                icon: Icons.sms_outlined,
+                                onPressed: () => _openPhoneAction('sms', c.phone),
+                              ),
+                            ],
+                          ),
                       ])),
                     ]),
                     const SizedBox(height: 16),
@@ -497,4 +559,27 @@ class _Info extends StatelessWidget {
       ],
     ),
   );
+}
+
+
+class _PhoneActionButton extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  const _PhoneActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 20),
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+        padding: const EdgeInsets.all(6),
+      );
 }
