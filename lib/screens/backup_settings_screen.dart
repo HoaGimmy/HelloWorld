@@ -114,7 +114,22 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
                   Text(email ?? 'Chưa kết nối tài khoản Google'),
                   const SizedBox(height: 4),
                   Text('Lần sao lưu: ${_lastBackup()}'),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Tự động sao lưu'),
+                    subtitle: const Text('1 lần/ngày khi mở hoặc quay lại ứng dụng'),
+                    value: status['autoEnabled'] == '1',
+                    onChanged: busy ? null : (value) => _perform(() async {
+                      await GoogleDriveBackupService.instance.setAutoBackupEnabled(value);
+                      await _load();
+                      if (value) {
+                        await GoogleDriveBackupService.instance.autoBackupIfDue();
+                        await _load();
+                      }
+                    }),
+                  ),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
