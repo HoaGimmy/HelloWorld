@@ -92,7 +92,6 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     final address = TextEditingController();
     String aluminumBrand = aluminumBrands.first;
     final aluminumType = TextEditingController();
-    final aluminumSystem = TextEditingController();
     final accessory = TextEditingController();
     final areaM2 = TextEditingController();
     final quantity = TextEditingController();
@@ -288,7 +287,6 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     name.dispose();
     address.dispose();
     aluminumType.dispose();
-    aluminumSystem.dispose();
     accessory.dispose();
     areaM2.dispose();
     quantity.dispose();
