@@ -29,7 +29,7 @@ class MPWindowsBrandHeader extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontStyle: FontStyle.italic,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: const Color(0xFFFFD965),
                       ),
                 ),
               ],
@@ -61,6 +61,7 @@ class _MPWindowsSplashScreenState extends State<MPWindowsSplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF15191F),
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -68,7 +69,7 @@ class _MPWindowsSplashScreenState extends State<MPWindowsSplashScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset('assets/branding/mpwindows_logo.svg', height: 150),
+                SvgPicture.asset('assets/branding/mpwindows_logo_dark.svg', height: 150),
                 const SizedBox(height: 18),
                 Text(
                   'Trung thực dẫn đầu - cửa sáng bền lâu.',
