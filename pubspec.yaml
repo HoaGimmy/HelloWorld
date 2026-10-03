@@ -11,6 +11,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/mpwindows_logo.svg
+    - assets/branding/mpwindows_logo_dark.svg
 
 dependencies:
   flutter:
