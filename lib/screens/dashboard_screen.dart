@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../services/database_service.dart';
 import '../services/export_service.dart';
 import '../widgets/mpwindows_brand.dart';
+import '../models/customer.dart';
+import 'customers_screen.dart';
 import 'operations_screen.dart';
 import 'settings_screen.dart';
 
@@ -61,6 +63,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const OperationsScreen())).then((_) => _refresh());
   }
 
+  void _openCustomersByStage(String title, {String? stage}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _DashboardCustomerListScreen(
+          title: title,
+          stage: stage,
+          year: selectedYear,
+          month: selectedMonth,
+        ),
+      ),
+    ).then((_) => _refresh());
+  }
+
   @override
   Widget build(BuildContext context) => FutureBuilder<List<Object>>(
         future: _future,
@@ -72,6 +88,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final surveys = stats['surveys'] ?? 0;
           final quotes = stats['quotes'] ?? 0;
           final contracts = stats['contracts'] ?? 0;
+          final consulting = stats['consulting'] ?? 0;
+          final negotiating = stats['negotiating'] ?? 0;
           final contractValue = finance['contractValue'] ?? 0;
           final paid = finance['paid'] ?? 0;
           final receivable = finance['receivable'] ?? 0;
@@ -134,10 +152,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     mainAxisSpacing: 12,
                     childAspectRatio: 1.35,
                     children: [
-                      _StatCard('Tổng khách', total.toString(), Icons.people_outline),
-                      _StatCard('Khảo sát', surveys.toString(), Icons.straighten),
-                      _StatCard('Báo giá', quotes.toString(), Icons.receipt_long_outlined),
-                      _StatCard('Đã chốt', contracts.toString(), Icons.handshake_outlined),
+                      _StatCard('Tổng khách hàng', total.toString(), Icons.people_outline, onTap: () => _openCustomersByStage('Tổng khách hàng')),
+                      _StatCard('Khảo sát', surveys.toString(), Icons.straighten, onTap: () => _openCustomersByStage('Khảo sát', stage: 'Khảo sát')),
+                      _StatCard('Báo giá', quotes.toString(), Icons.receipt_long_outlined, onTap: () => _openCustomersByStage('Báo giá', stage: 'Báo giá')),
+                      _StatCard('Đang tư vấn', consulting.toString(), Icons.support_agent_outlined, onTap: () => _openCustomersByStage('Đang tư vấn', stage: 'Đang tư vấn')),
+                      _StatCard('Đàm phán', negotiating.toString(), Icons.forum_outlined, onTap: () => _openCustomersByStage('Đàm phán', stage: 'Đàm phán')),
+                      _StatCard('Đã chốt', contracts.toString(), Icons.handshake_outlined, onTap: () => _openCustomersByStage('Đã chốt', stage: 'Chốt hợp đồng')),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -268,11 +288,15 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  const _StatCard(this.label, this.value, this.icon);
+  final VoidCallback? onTap;
+  const _StatCard(this.label, this.value, this.icon, {this.onTap});
   @override
   Widget build(BuildContext context) => Card(
         elevation: 0,
-        child: Padding(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,7 +308,71 @@ class _StatCard extends StatelessWidget {
             ],
           ),
         ),
+        ),
       );
+}
+
+class _DashboardCustomerListScreen extends StatefulWidget {
+  final String title;
+  final String? stage;
+  final int year;
+  final int? month;
+  const _DashboardCustomerListScreen({required this.title, this.stage, required this.year, required this.month});
+
+  @override
+  State<_DashboardCustomerListScreen> createState() => _DashboardCustomerListScreenState();
+}
+
+class _DashboardCustomerListScreenState extends State<_DashboardCustomerListScreen> {
+  bool loading = true;
+  List<Customer> customers = [];
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    final all = await DatabaseService.instance.getCustomers();
+    final filtered = all.where((c) {
+      if (widget.stage != null && c.stage != widget.stage) return false;
+      final created = DateTime.tryParse(c.createdAt);
+      if (created == null || created.year != widget.year) return false;
+      return widget.month == null || created.month == widget.month;
+    }).toList();
+    if (mounted) setState(() { customers = filtered; loading = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text('${widget.title} (${customers.length})')),
+    body: loading
+        ? const Center(child: CircularProgressIndicator())
+        : customers.isEmpty
+            ? Center(child: Text('Không có khách hàng trong ${widget.month == null ? 'năm' : 'tháng'} đã chọn.'))
+            : RefreshIndicator(
+                onRefresh: _load,
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: customers.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) {
+                    final customer = customers[i];
+                    return Card(
+                      elevation: 0,
+                      child: ListTile(
+                        leading: CircleAvatar(child: Text(customer.name.isEmpty ? '?' : customer.name[0].toUpperCase())),
+                        title: Text(customer.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        subtitle: Text([if (customer.phone.isNotEmpty) customer.phone, customer.stage].join(' • ')),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => CustomerDetailScreen(customerId: customer.id!)),
+                        ).then((_) => _load()),
+                      ),
+                    );
+                  },
+                ),
+              ),
+  );
 }
 
 class _MoneyRow extends StatelessWidget {
