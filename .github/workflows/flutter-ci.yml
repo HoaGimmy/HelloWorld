@@ -42,19 +42,19 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName MPWindows CRM" ios/Runner/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist
       - name: Install official MP Windows app icon
-        continue-on-error: true
         run: |
+          python3 -m pip install --quiet pillow
           python3 - <<'PY'
           import base64
+          import io
           import json
           import pathlib
-          import subprocess
+          from PIL import Image
 
           icon_set = pathlib.Path("ios/Runner/Assets.xcassets/AppIcon.appiconset")
           contents = json.loads((icon_set / "Contents.json").read_text())
-          source = pathlib.Path("/tmp/mpwindows_app_icon.jpg")
           encoded = pathlib.Path("assets/branding/mpwindows_app_icon.jpg.b64").read_text().strip()
-          source.write_bytes(base64.b64decode(encoded, validate=True))
+          source = Image.open(io.BytesIO(base64.b64decode(encoded, validate=True))).convert("RGB")
 
           for image in contents.get("images", []):
               filename = image.get("filename")
@@ -64,12 +64,9 @@ jobs:
                   continue
               points = float(size.split("x")[0])
               factor = float(scale.rstrip("x"))
-              pixels = str(round(points * factor))
-              subprocess.run(
-                  ["sips", "-s", "format", "png", "-z", pixels, pixels, str(source), "--out", str(icon_set / filename)],
-                  check=True,
-                  stdout=subprocess.DEVNULL,
-              )
+              pixels = round(points * factor)
+              resized = source.resize((pixels, pixels), Image.Resampling.LANCZOS)
+              resized.save(icon_set / filename, format="PNG", optimize=True)
           PY
       - run: flutter build ios --release --no-codesign
       - name: Package unsigned IPA
