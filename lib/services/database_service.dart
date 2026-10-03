@@ -319,7 +319,7 @@ class DatabaseService {
         [pattern],
       );
       paymentRows = await database.rawQuery(
-        'SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE paid_at LIKE ?',
+        "SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE contract_id IN (SELECT id FROM contracts WHERE COALESCE(NULLIF(signed_at,''), created_at) LIKE ?)",
         [pattern],
       );
     }
