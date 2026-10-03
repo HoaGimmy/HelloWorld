@@ -33,13 +33,11 @@ class AttachmentService {
   }
 
   static Future<String?> pickBusinessDocument() async {
-    final result = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
+    final picked = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'xlsx', 'xls', 'doc', 'docx'],
     );
-    if (result == null || result.files.isEmpty) return null;
-    final picked = result.files.single;
+    if (picked == null) return null;
     final path = picked.path;
     if (path == null || path.isEmpty) return null;
     return _copyToApp(path, picked.name);
