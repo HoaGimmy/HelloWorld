@@ -16,7 +16,7 @@ class DatabaseService {
     final path = dir.path + '/mpwindows_crm.db';
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, _) async {
         await db.execute(
           'CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,phone TEXT,zalo TEXT,address TEXT,source TEXT,stage TEXT,need TEXT,budget REAL DEFAULT 0,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)',
@@ -35,12 +35,13 @@ class DatabaseService {
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createBusinessTables(db);
         if (oldVersion < 3) await _upgradeBusinessTablesV3(db);
+        if (oldVersion < 4) await _upgradeBusinessTablesV4(db);
       },
     );
   }
 
   static Future<void> _createBusinessTables(Database db) async {
-    await db.execute('CREATE TABLE IF NOT EXISTS projects(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,name TEXT NOT NULL,address TEXT,category TEXT,aluminum_type TEXT,aluminum_system TEXT,accessory TEXT,dimensions TEXT,quantity REAL DEFAULT 0,status TEXT,start_date TEXT,production_date TEXT,install_date TEXT,photo_paths TEXT,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS projects(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,name TEXT NOT NULL,address TEXT,category TEXT,aluminum_brand TEXT,aluminum_type TEXT,aluminum_system TEXT,accessory TEXT,dimensions TEXT,quantity REAL DEFAULT 0,status TEXT,start_date TEXT,production_date TEXT,install_date TEXT,photo_paths TEXT,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE IF NOT EXISTS quotes(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,amount REAL DEFAULT 0,status TEXT,valid_until TEXT,file_path TEXT,note TEXT,created_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE IF NOT EXISTS contracts(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,value REAL DEFAULT 0,signed_at TEXT,install_date TEXT,warranty_months INTEGER DEFAULT 12,status TEXT,file_path TEXT,note TEXT,created_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,contract_id INTEGER NOT NULL,customer_id INTEGER NOT NULL,amount REAL DEFAULT 0,paid_at TEXT NOT NULL,method TEXT,note TEXT)');
