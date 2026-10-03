@@ -173,7 +173,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     zalo.text = c?.zalo ?? '';
     address.text = c?.address ?? '';
     need.text = c?.need ?? '';
-    budget.text = c == null || c.budget == 0 ? '' : c.budget.toStringAsFixed(0);
+    budget.text = c == null || c.budget == 0 ? '' : NumberFormat.decimalPattern('vi_VN').format(c.budget);
     note.text = c?.note ?? '';
     source = c?.source ?? leadSources.first;
     stage = c?.stage ?? pipelineStages.first;
@@ -200,7 +200,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       source: source,
       stage: stage,
       need: need.text.trim(),
-      budget: double.tryParse(budget.text.replaceAll(',', '').trim()) ?? 0,
+      budget: double.tryParse(budget.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
       note: note.text.trim(),
       createdAt: old?.createdAt ?? now,
       updatedAt: now,
@@ -270,7 +270,19 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
           TextFormField(
                     textCapitalization: TextCapitalization.sentences,controller: need, maxLines: 2, decoration: dec('Nhu cầu', Icons.home_work_outlined)),
           const SizedBox(height: 12),
-          TextFormField(controller: budget, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: dec('Ngân sách dự kiến', Icons.payments_outlined)),
+          TextFormField(
+            controller: budget,
+            keyboardType: TextInputType.number,
+            decoration: dec('Ngân sách dự kiến (VNĐ)', Icons.payments_outlined).copyWith(suffixText: '₫'),
+            onChanged: (value) {
+              final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+              if (digits.isEmpty) return;
+              final formatted = NumberFormat.decimalPattern('vi_VN').format(int.parse(digits));
+              if (formatted != value) {
+                budget.value = TextEditingValue(text: formatted, selection: TextSelection.collapsed(offset: formatted.length));
+              }
+            },
+          ),
           const SizedBox(height: 12),
           TextFormField(
                     textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 4, decoration: dec('Ghi chú', Icons.notes_outlined)),
@@ -634,7 +646,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     const SizedBox(height: 16),
                     Wrap(spacing: 16, runSpacing: 12, children: [
                       _Info(label: 'Nguồn', value: c.source),
-                      _Info(label: 'Ngân sách', value: c.budget > 0 ? NumberFormat.decimalPattern('vi_VN').format(c.budget) : 'Chưa có'),
+                      _Info(label: 'Ngân sách', value: c.budget > 0 ? '${NumberFormat.decimalPattern('vi_VN').format(c.budget)} ₫' : 'Chưa có'),
                     ]),
                     const SizedBox(height: 12),
                     InkWell(
