@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../services/database_service.dart';
 import '../services/export_service.dart';
+import '../widgets/mpwindows_brand.dart';
 import 'operations_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -91,10 +92,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 30),
                 children: [
-                  Text('MPWindows CRM', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 6),
+                  const MPWindowsBrandHeader(),
+                  const SizedBox(height: 14),
+                  Text('CRM vận hành', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
                   const Text('Khách hàng → báo giá → hợp đồng → thi công → thu tiền.'),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   GridView.count(
                     crossAxisCount: 2,
                     shrinkWrap: true,
