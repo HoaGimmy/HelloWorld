@@ -45,8 +45,6 @@ class GoogleDriveBackupService {
       }
       await DatabaseService.instance.setSetting('drive_backup_email', account.email);
       return account;
-    } on GoogleSignInAccount catch (_) {
-      rethrow;
     } catch (error) {
       throw StateError('Google Sign-In lỗi: $error');
     }
