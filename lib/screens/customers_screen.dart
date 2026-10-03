@@ -59,6 +59,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: TextField(
+                    textCapitalization: TextCapitalization.sentences,
               controller: searchController,
               decoration: InputDecoration(
                 hintText: 'Tìm tên, số điện thoại, địa chỉ...',
@@ -237,13 +238,16 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
         children: [
-          TextFormField(controller: name, decoration: dec('Họ và tên *', Icons.person_outline), validator: (v) => v == null || v.trim().isEmpty ? 'Nhập tên khách hàng' : null),
+          TextFormField(
+                    textCapitalization: TextCapitalization.sentences,controller: name, decoration: dec('Họ và tên *', Icons.person_outline), validator: (v) => v == null || v.trim().isEmpty ? 'Nhập tên khách hàng' : null),
           const SizedBox(height: 12),
           TextFormField(controller: phone, keyboardType: TextInputType.phone, decoration: dec('Số điện thoại', Icons.phone_outlined)),
           const SizedBox(height: 12),
-          TextFormField(controller: zalo, decoration: dec('Zalo', Icons.chat_bubble_outline)),
+          TextFormField(
+                    textCapitalization: TextCapitalization.sentences,controller: zalo, decoration: dec('Zalo', Icons.chat_bubble_outline)),
           const SizedBox(height: 12),
-          TextFormField(controller: address, decoration: dec('Địa chỉ', Icons.location_on_outlined)),
+          TextFormField(
+                    textCapitalization: TextCapitalization.sentences,controller: address, decoration: dec('Địa chỉ', Icons.location_on_outlined)),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: source,
@@ -259,11 +263,13 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
             onChanged: (v) => setState(() => stage = v ?? stage),
           ),
           const SizedBox(height: 12),
-          TextFormField(controller: need, maxLines: 2, decoration: dec('Nhu cầu', Icons.home_work_outlined)),
+          TextFormField(
+                    textCapitalization: TextCapitalization.sentences,controller: need, maxLines: 2, decoration: dec('Nhu cầu', Icons.home_work_outlined)),
           const SizedBox(height: 12),
           TextFormField(controller: budget, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: dec('Ngân sách dự kiến', Icons.payments_outlined)),
           const SizedBox(height: 12),
-          TextFormField(controller: note, maxLines: 4, decoration: dec('Ghi chú', Icons.notes_outlined)),
+          TextFormField(
+                    textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 4, decoration: dec('Ghi chú', Icons.notes_outlined)),
           const SizedBox(height: 20),
           FilledButton.icon(
             onPressed: saving ? null : _save,
@@ -341,8 +347,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 onChanged: (v) => setDialogState(() => type = v ?? type),
                 decoration: const InputDecoration(labelText: 'Loại'),
               ),
-              TextField(controller: title, decoration: const InputDecoration(labelText: 'Tiêu đề')),
-              TextField(controller: content, maxLines: 3, decoration: const InputDecoration(labelText: 'Nội dung')),
+              TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: title, decoration: const InputDecoration(labelText: 'Tiêu đề')),
+              TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: content, maxLines: 3, decoration: const InputDecoration(labelText: 'Nội dung')),
             ],
           ),
           actions: [
