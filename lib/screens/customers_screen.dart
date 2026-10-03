@@ -5,6 +5,7 @@ import '../models/activity.dart';
 import '../models/customer.dart';
 import '../services/database_service.dart';
 import '../utils/constants.dart';
+import 'operations_screen.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
@@ -422,6 +423,20 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.tonalIcon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => OperationsScreen(customerId: c.id, customerName: c.name),
+                  ),
+                );
+                _load();
+              },
+              icon: const Icon(Icons.business_center_outlined),
+              label: const Text('Công trình • Báo giá • Hợp đồng • Công nợ'),
             ),
             const SizedBox(height: 20),
             Text('Timeline', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
