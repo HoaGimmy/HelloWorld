@@ -62,7 +62,8 @@ class _TasksScreenState extends State<TasksScreen> {
                 children: [
                   const Text('Thêm công việc', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 14),
-                  TextField(controller: title, decoration: const InputDecoration(labelText: 'Tên công việc')),
+                  TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: title, decoration: const InputDecoration(labelText: 'Tên công việc')),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<int?>(
                     initialValue: customerId,
@@ -96,7 +97,8 @@ class _TasksScreenState extends State<TasksScreen> {
                       if (picked != null) setModalState(() => dueDate = picked);
                     },
                   ),
-                  TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
+                  TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
                   const SizedBox(height: 14),
                   FilledButton(
                     onPressed: title.text.trim().isEmpty
