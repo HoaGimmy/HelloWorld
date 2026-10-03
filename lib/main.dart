@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+
 import 'screens/customers_screen.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/tasks_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/pipeline_screen.dart';
+import 'widgets/mpwindows_brand.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,10 +24,14 @@ class MPWindowsCRMApp extends StatelessWidget {
         title: 'MPWindows CRM',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1565C0)),
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0B5AA6)),
           inputDecorationTheme: const InputDecorationTheme(isDense: true),
         ),
-        home: const HomeScreen(),
+        initialRoute: '/',
+        routes: {
+          '/': (_) => const MPWindowsSplashScreen(),
+          '/home': (_) => const HomeScreen(),
+        },
       );
 }
 
