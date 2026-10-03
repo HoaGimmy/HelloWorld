@@ -29,7 +29,7 @@ class MPWindowsBrandHeader extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontStyle: FontStyle.italic,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFFFFD965),
+                        color: const Color(0xFF8A5A00),
                       ),
                 ),
               ],
@@ -76,13 +76,13 @@ class _MPWindowsSplashScreenState extends State<MPWindowsSplashScreen> {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontStyle: FontStyle.italic,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: const Color(0xFFFFD965),
                       ),
                 ),
                 const SizedBox(height: 28),
                 const SizedBox.square(
                   dimension: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFFD965)),
                 ),
               ],
             ),
