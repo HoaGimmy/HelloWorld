@@ -9,12 +9,16 @@ import 'screens/dashboard_screen.dart';
 import 'screens/pipeline_screen.dart';
 import 'widgets/mpwindows_brand.dart';
 import 'services/theme_color_controller.dart';
+import 'services/ios_native_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi_VN');
   await ThemeColorController.instance.load();
   runApp(const MPWindowsCRMApp());
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    IOSNativeService.instance.initialize();
+  });
 }
 
 class MPWindowsCRMApp extends StatelessWidget {
