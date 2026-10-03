@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/activity.dart';
 import '../models/customer.dart';
 import '../services/database_service.dart';
+import '../services/ios_native_service.dart';
 import '../utils/constants.dart';
 import 'operations_screen.dart';
 
@@ -223,6 +224,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
         createdAt: now,
       ));
     }
+    await IOSNativeService.instance.syncAll();
     if (mounted) Navigator.pop(context, true);
   }
 
@@ -326,6 +328,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
     if (ok == true) {
       await DatabaseService.instance.deleteCustomer(widget.customerId);
+      await IOSNativeService.instance.syncAll();
       if (mounted) Navigator.pop(context, true);
     }
   }
