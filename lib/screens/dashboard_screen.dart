@@ -162,7 +162,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   FilledButton.icon(
                     onPressed: _openOperations,
                     icon: const Icon(Icons.business_center_outlined),
-                    label: const Text('Công trình • Báo giá • Hợp đồng • Công nợ'),
+                    label: const Text('Quản lý công trình'),
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
