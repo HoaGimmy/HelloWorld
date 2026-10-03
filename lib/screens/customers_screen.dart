@@ -365,6 +365,158 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
+  Future<void> _changeStage() async {
+    final c = customer;
+    if (c == null) return;
+    var selected = c.stage;
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              0,
+              20,
+              16 + MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: SizedBox(
+              height: MediaQuery.sizeOf(context).height * .72,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Cập nhật hành trình khách',
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Đóng',
+                        onPressed: () => Navigator.pop(sheetContext, false),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: pipelineStages.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, index) {
+                        final stage = pipelineStages[index];
+                        final active = stage == selected;
+                        final stageThemeColor = stageColor(stage, Theme.of(context));
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => setSheetState(() => selected = stage),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                            decoration: BoxDecoration(
+                              color: active ? stageThemeColor.withValues(alpha: .08) : null,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: active
+                                    ? stageThemeColor
+                                    : Theme.of(context).dividerColor.withValues(alpha: .45),
+                                width: active ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: stageThemeColor.withValues(alpha: .14),
+                                  child: Icon(_stageIcon(stage), color: stageThemeColor, size: 20),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    stage,
+                                    style: TextStyle(
+                                      fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Radio<String>(
+                                  value: stage,
+                                  groupValue: selected,
+                                  onChanged: (value) {
+                                    if (value != null) setSheetState(() => selected = value);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(sheetContext, false),
+                          child: const Text('Hủy'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () => Navigator.pop(sheetContext, true),
+                          child: const Text('Lưu'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (saved != true || selected == c.stage) return;
+    final oldStage = c.stage;
+    final now = DateTime.now().toIso8601String();
+    await DatabaseService.instance.updateCustomerStage(widget.customerId, selected);
+    await DatabaseService.instance.addActivity(Activity(
+      customerId: widget.customerId,
+      type: 'Hành trình',
+      title: 'Cập nhật hành trình khách',
+      content: '$oldStage → $selected',
+      createdAt: now,
+    ));
+    await IOSNativeService.instance.syncAll();
+    await _load();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Đã chuyển sang “$selected”')),
+    );
+  }
+
+  IconData _stageIcon(String stage) => switch (stage) {
+        'Khách mới' => Icons.group_outlined,
+        'Đã liên hệ' => Icons.phone_in_talk_outlined,
+        'Đang tư vấn' => Icons.forum_outlined,
+        'Khảo sát' => Icons.search_outlined,
+        'Báo giá' => Icons.request_quote_outlined,
+        'Đàm phán' => Icons.handshake_outlined,
+        'Chốt hợp đồng' => Icons.description_outlined,
+        'Thi công' => Icons.build_outlined,
+        'Hoàn thành' => Icons.task_alt,
+        'Chăm sóc sau bán' => Icons.favorite_outline,
+        'Không thành công / Mất khách' => Icons.cancel_outlined,
+        _ => Icons.route_outlined,
+      };
+
   Future<void> _addActivity() async {
     final title = TextEditingController();
     final content = TextEditingController();
@@ -485,10 +637,27 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       _Info(label: 'Ngân sách', value: c.budget > 0 ? NumberFormat.decimalPattern('vi_VN').format(c.budget) : 'Chưa có'),
                     ]),
                     const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(20)),
-                      child: Text(c.stage, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: _changeStage,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: .12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: color.withValues(alpha: .28)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(_stageIcon(c.stage), size: 18, color: color),
+                            const SizedBox(width: 7),
+                            Text(c.stage, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+                            const SizedBox(width: 3),
+                            Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: color),
+                          ],
+                        ),
+                      ),
                     ),
                     if (c.address.isNotEmpty) ...[const SizedBox(height: 12), _Info(label: 'Địa chỉ', value: c.address)],
                     if (c.need.isNotEmpty) ...[const SizedBox(height: 12), _Info(label: 'Nhu cầu', value: c.need)],
