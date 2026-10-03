@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'screens/customers_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/pipeline_screen.dart';
 
 void main() => runApp(const MPWindowsCRMApp());
 
@@ -34,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final pages = <Widget>[
       const DashboardScreen(),
       const CustomersScreen(),
-      const _SimplePage(title: 'Hành trình', icon: Icons.view_kanban_outlined, message: 'Pipeline khách hàng sẽ là bước tiếp theo.'),
+      const PipelineScreen(),
       const _SimplePage(title: 'Công việc', icon: Icons.checklist_outlined, message: 'Quản lý deadline và giao việc.'),
       const _SimplePage(title: 'Lịch hẹn', icon: Icons.event_outlined, message: 'Lịch khảo sát và gặp khách.'),
     ];
