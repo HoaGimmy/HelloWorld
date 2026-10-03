@@ -123,8 +123,13 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
                         onPressed: busy
                             ? null
                             : () => _perform(() async {
-                                  await GoogleDriveBackupService.instance.connect();
+                                  final account = await GoogleDriveBackupService.instance.connect();
                                   await _load();
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Đã kết nối Google: ${account.email}')),
+                                    );
+                                  }
                                 }),
                         icon: const Icon(Icons.link),
                         label: const Text('Kết nối Google Drive'),
