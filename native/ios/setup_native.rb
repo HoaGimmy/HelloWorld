@@ -25,7 +25,23 @@ abort 'Runner target not found.' unless runner
 
 runner.build_configurations.each do |config|
   config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'Runner/Runner.entitlements'
+  config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'vn.mpwindows.crm'
 end
+
+# Google Sign-In for Drive backup. The reversed OAuth client ID is the
+# callback URL scheme Google uses to return to MPWindows CRM after sign-in.
+info_plist_path = File.join(IOS, 'Runner', 'Info.plist')
+info = Xcodeproj::Plist.read_from_path(info_plist_path)
+info['GIDClientID'] = '395406474389-i6uqtdu169afmdepp4rj3vg35snkf5io.apps.googleusercontent.com'
+info['CFBundleURLTypes'] ||= []
+google_scheme = 'com.googleusercontent.apps.395406474389-i6uqtdu169afmdepp4rj3vg35snkf5io'
+unless info['CFBundleURLTypes'].any? { |item| Array(item['CFBundleURLSchemes']).include?(google_scheme) }
+  info['CFBundleURLTypes'] << {
+    'CFBundleTypeRole' => 'Editor',
+    'CFBundleURLSchemes' => [google_scheme]
+  }
+end
+Xcodeproj::Plist.write_to_path(info, info_plist_path)
 
 widget = project.targets.find { |target| target.name == 'MPWindowsWidget' }
 unless widget
