@@ -235,6 +235,20 @@ class DatabaseService {
     return database.delete('appointments', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<List<Map<String, Object?>>> getUpcomingAppointments(
+    DateTime from, {
+    int limit = 40,
+  }) async {
+    final database = await db;
+    return database.query(
+      'appointments',
+      where: 'starts_at >= ?',
+      whereArgs: [from.toIso8601String()],
+      orderBy: 'starts_at ASC',
+      limit: limit,
+    );
+  }
+
   Future<List<Map<String, Object?>>> getAppointmentsForDay(DateTime date) async {
     final database = await db;
     final prefix = date.toIso8601String().substring(0, 10);
