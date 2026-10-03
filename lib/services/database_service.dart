@@ -93,6 +93,19 @@ class DatabaseService {
     return rows.map(Activity.fromMap).toList();
   }
 
+  Future<int> updateCustomerStage(int customerId, String stage) async {
+    final database = await db;
+    return database.update(
+      'customers',
+      {
+        'stage': stage,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [customerId],
+    );
+  }
+
   Future<Map<String, int>> getCustomerStats() async {
     final database = await db;
     Future<int> count(String sql) async => Sqflite.firstIntValue(await database.rawQuery(sql)) ?? 0;
