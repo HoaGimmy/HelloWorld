@@ -61,15 +61,19 @@ class _MPWindowsSplashScreenState extends State<MPWindowsSplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF15191F),
-      body: SafeArea(
+      backgroundColor: const Color(0xFF0C1A32),
+      body: SizedBox.expand(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(28),
+            padding: const EdgeInsets.symmetric(horizontal: 28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset('assets/branding/mpwindows_logo_dark.svg', height: 150),
+                SvgPicture.asset(
+                  'assets/branding/mpwindows_logo_dark.svg',
+                  width: MediaQuery.sizeOf(context).width * 0.88,
+                  fit: BoxFit.fitWidth,
+                ),
                 const SizedBox(height: 18),
                 Text(
                   'Trung thực dẫn đầu - cửa sáng bền lâu.',
