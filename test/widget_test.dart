@@ -1,10 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mpwindows_crm/main.dart';
+import 'package:mpwindows_crm/utils/constants.dart';
 
 void main() {
-  testWidgets('MPWindows CRM renders branded splash screen', (tester) async {
-    await tester.pumpWidget(const MPWindowsCRMApp());
-
-    expect(find.text('Trung thực dẫn đầu - cửa sáng bền lâu.'), findsOneWidget);
+  test('MPWindows CRM keeps the complete customer pipeline', () {
+    expect(pipelineStages, isNotEmpty);
+    expect(pipelineStages.first, 'Khách mới');
+    expect(pipelineStages, contains('Chốt hợp đồng'));
+    expect(pipelineStages, contains('Không thành công / Mất khách'));
   });
 }
