@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/appointment.dart';
 import '../models/customer.dart';
 import '../services/database_service.dart';
+import '../services/ios_native_service.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -244,6 +245,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         setState(() => selectedDate = pickedDate);
       }
       await _load();
+      await IOSNativeService.instance.syncAll();
     }
   }
 
