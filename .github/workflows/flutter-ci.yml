@@ -33,9 +33,10 @@ jobs:
           channel: stable
       - run: flutter create --platforms=ios .
       - run: flutter pub get
-      - name: Set iOS display name
+      - name: Configure iOS app
         run: |
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName MPWindows CRM" ios/Runner/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist
       - run: flutter build ios --release --no-codesign
       - name: Package unsigned IPA
         run: |
