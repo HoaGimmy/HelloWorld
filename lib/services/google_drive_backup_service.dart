@@ -36,9 +36,20 @@ class GoogleDriveBackupService {
 
   GoogleSignInAccount? get currentUser => _googleSignIn.currentUser;
 
-  Future<GoogleSignInAccount?> connect() async {
-    final existing = await _googleSignIn.signInSilently();
-    return existing ?? _googleSignIn.signIn();
+  Future<GoogleSignInAccount> connect() async {
+    try {
+      final existing = await _googleSignIn.signInSilently();
+      final account = existing ?? await _googleSignIn.signIn();
+      if (account == null) {
+        throw StateError('Đăng nhập Google đã bị hủy.');
+      }
+      await DatabaseService.instance.setSetting('drive_backup_email', account.email);
+      return account;
+    } on GoogleSignInAccount catch (_) {
+      rethrow;
+    } catch (error) {
+      throw StateError('Google Sign-In lỗi: $error');
+    }
   }
 
   Future<void> disconnect() => _googleSignIn.disconnect();
