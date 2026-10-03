@@ -260,15 +260,6 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   ),
                 ],
                 const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    final d = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime.now().add(const Duration(days: 3650)), initialDate: paidAt);
-                    if (d != null) setModalState(() => paidAt = DateTime(d.year, d.month, d.day, paidAt.hour, paidAt.minute));
-                  },
-                  icon: const Icon(Icons.calendar_today_outlined),
-                  label: Text('Ngày thu: ${DateFormat('dd/MM/yyyy').format(paidAt)}'),
-                ),
-                const SizedBox(height: 10),
                 TextField(
                     textCapitalization: TextCapitalization.sentences,controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Ghi chú')),
                 const SizedBox(height: 14),
@@ -606,6 +597,22 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   decoration: const InputDecoration(labelText: 'Hình thức'),
                   items: const ['Chuyển khoản','Tiền mặt','Khác'].map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
                   onChanged: (v) => setModalState(() => method = v ?? method),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final d = await showDatePicker(
+                      context: context,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now().add(const Duration(days: 3650)),
+                      initialDate: paidAt,
+                    );
+                    if (d != null) {
+                      setModalState(() => paidAt = DateTime(d.year, d.month, d.day, paidAt.hour, paidAt.minute));
+                    }
+                  },
+                  icon: const Icon(Icons.calendar_today_outlined),
+                  label: Text('Ngày thu: ${DateFormat('dd/MM/yyyy').format(paidAt)}'),
                 ),
                 const SizedBox(height: 10),
                 TextField(
