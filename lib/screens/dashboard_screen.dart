@@ -5,6 +5,7 @@ import '../services/database_service.dart';
 import '../services/export_service.dart';
 import '../widgets/mpwindows_brand.dart';
 import 'operations_screen.dart';
+import 'settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -50,6 +51,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _openSettings() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+  }
+
   void _openOperations() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const OperationsScreen())).then((_) => _refresh());
   }
@@ -73,6 +78,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             appBar: AppBar(
               title: const Text('Tổng quan'),
               actions: [
+                IconButton(
+                  tooltip: 'Cài đặt',
+                  onPressed: _openSettings,
+                  icon: const Icon(Icons.settings_outlined),
+                ),
                 IconButton(
                   tooltip: 'Nghiệp vụ',
                   onPressed: _openOperations,
