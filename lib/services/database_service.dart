@@ -295,10 +295,35 @@ class DatabaseService {
     return database.query('payments', where: where, whereArgs: args, orderBy: 'paid_at DESC');
   }
 
-  Future<Map<String, double>> getFinanceStats() async {
+  String _periodPattern({required int year, int? month}) {
+    if (month == null) return '$year-%';
+    return '$year-${month.toString().padLeft(2, '0')}%';
+  }
+
+  Future<Map<String, double>> getFinanceStats({int? year, int? month}) async {
     final database = await db;
-    final contractRows = await database.rawQuery('SELECT COALESCE(SUM(value),0) AS total FROM contracts');
-    final paymentRows = await database.rawQuery('SELECT COALESCE(SUM(amount),0) AS total FROM payments');
+
+    List<Map<String, Object?>> contractRows;
+    List<Map<String, Object?>> paymentRows;
+    if (year == null) {
+      contractRows = await database.rawQuery(
+        'SELECT COALESCE(SUM(value),0) AS total FROM contracts',
+      );
+      paymentRows = await database.rawQuery(
+        'SELECT COALESCE(SUM(amount),0) AS total FROM payments',
+      );
+    } else {
+      final pattern = _periodPattern(year: year, month: month);
+      contractRows = await database.rawQuery(
+        "SELECT COALESCE(SUM(value),0) AS total FROM contracts WHERE COALESCE(NULLIF(signed_at,''), created_at) LIKE ?",
+        [pattern],
+      );
+      paymentRows = await database.rawQuery(
+        'SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE paid_at LIKE ?',
+        [pattern],
+      );
+    }
+
     final contractValue = ((contractRows.first['total'] ?? 0) as num).toDouble();
     final paid = ((paymentRows.first['total'] ?? 0) as num).toDouble();
     return {'contractValue': contractValue, 'paid': paid, 'receivable': contractValue - paid};
@@ -325,14 +350,33 @@ class DatabaseService {
     );
   }
 
-  Future<Map<String, int>> getCustomerStats() async {
+  Future<Map<String, int>> getCustomerStats({int? year, int? month}) async {
     final database = await db;
-    Future<int> count(String sql) async => Sqflite.firstIntValue(await database.rawQuery(sql)) ?? 0;
+    final pattern = year == null ? null : _periodPattern(year: year, month: month);
+
+    Future<int> count({String? stage}) async {
+      final conditions = <String>[];
+      final args = <Object?>[];
+      if (stage != null) {
+        conditions.add('stage = ?');
+        args.add(stage);
+      }
+      if (pattern != null) {
+        conditions.add('created_at LIKE ?');
+        args.add(pattern);
+      }
+      final where = conditions.isEmpty ? '' : ' WHERE ${conditions.join(' AND ')}';
+      return Sqflite.firstIntValue(
+            await database.rawQuery('SELECT COUNT(*) FROM customers$where', args),
+          ) ??
+          0;
+    }
+
     return {
-      'total': await count('SELECT COUNT(*) FROM customers'),
-      'contracts': await count("SELECT COUNT(*) FROM customers WHERE stage = 'Chốt hợp đồng'"),
-      'surveys': await count("SELECT COUNT(*) FROM customers WHERE stage = 'Khảo sát'"),
-      'quotes': await count("SELECT COUNT(*) FROM customers WHERE stage = 'Báo giá'"),
+      'total': await count(),
+      'contracts': await count(stage: 'Chốt hợp đồng'),
+      'surveys': await count(stage: 'Khảo sát'),
+      'quotes': await count(stage: 'Báo giá'),
     };
   }
 }
