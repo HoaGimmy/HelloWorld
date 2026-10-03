@@ -444,7 +444,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 _load();
               },
               icon: const Icon(Icons.business_center_outlined),
-              label: const Text('Công trình • Báo giá • Hợp đồng • Công nợ'),
+              label: const Text('Quản lý công trình'),
             ),
             const SizedBox(height: 20),
             Text('Timeline', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
