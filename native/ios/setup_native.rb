@@ -57,12 +57,17 @@ unless widget
   }
 end
 
+widget.product_reference.path = 'MPWindowsWidget.appex'
+widget.product_reference.name = 'MPWindowsWidget.appex'
+
 widget.build_configurations.each do |config|
   runner_config = runner.build_configurations.find { |candidate| candidate.name == config.name }
   runner_bundle = runner_config&.build_settings&.fetch('PRODUCT_BUNDLE_IDENTIFIER', nil)
   runner_bundle = 'com.example.mpwindowsCrm' if runner_bundle.nil? || runner_bundle.empty?
 
   settings = config.build_settings
+  settings['PRODUCT_NAME'] = 'MPWindowsWidget'
+  settings['EXECUTABLE_NAME'] = 'MPWindowsWidget'
   settings['PRODUCT_BUNDLE_IDENTIFIER'] = "#{runner_bundle}.MPWindowsWidget"
   settings['INFOPLIST_FILE'] = 'MPWindowsWidget/Info.plist'
   settings['CODE_SIGN_ENTITLEMENTS'] = 'MPWindowsWidget/MPWindowsWidget.entitlements'
