@@ -15,6 +15,8 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   late Future<List<Object>> _future;
   bool exporting = false;
+  int selectedYear = DateTime.now().year;
+  int? selectedMonth = DateTime.now().month;
   final money = NumberFormat.decimalPattern('vi_VN');
 
   @override
@@ -25,8 +27,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _reloadFuture() {
     _future = Future.wait<Object>([
-      DatabaseService.instance.getCustomerStats(),
-      DatabaseService.instance.getFinanceStats(),
+      DatabaseService.instance.getCustomerStats(year: selectedYear, month: selectedMonth),
+      DatabaseService.instance.getFinanceStats(year: selectedYear, month: selectedMonth),
     ]);
   }
 
@@ -105,9 +107,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const MPWindowsBrandHeader(),
                   const SizedBox(height: 14),
                   Text('CRM vận hành', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 4),
-                  const Text('Khách hàng → báo giá → hợp đồng → thi công → thu tiền.'),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 10),
+                  _PeriodFilter(
+                    year: selectedYear,
+                    month: selectedMonth,
+                    onYearChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        selectedYear = value;
+                        _reloadFuture();
+                      });
+                    },
+                    onMonthChanged: (value) {
+                      setState(() {
+                        selectedMonth = value;
+                        _reloadFuture();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 14),
                   GridView.count(
                     crossAxisCount: 2,
                     shrinkWrap: true,
@@ -158,6 +176,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         },
       );
+}
+
+class _PeriodFilter extends StatelessWidget {
+  final int year;
+  final int? month;
+  final ValueChanged<int?> onYearChanged;
+  final ValueChanged<int?> onMonthChanged;
+
+  const _PeriodFilter({
+    required this.year,
+    required this.month,
+    required this.onYearChanged,
+    required this.onMonthChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final currentYear = DateTime.now().year;
+    final years = List<int>.generate(12, (index) => currentYear + 1 - index);
+
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.filter_alt_outlined, size: 20, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 7),
+                const Text('Kỳ đánh giá', style: TextStyle(fontWeight: FontWeight.w700)),
+                const Spacer(),
+                Text(
+                  month == null ? 'Cả năm $year' : 'Tháng $month/$year',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<int?>(
+                    initialValue: month,
+                    decoration: const InputDecoration(
+                      labelText: 'Tháng',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(value: null, child: Text('Cả năm')),
+                      ...List.generate(
+                        12,
+                        (index) => DropdownMenuItem<int?>(
+                          value: index + 1,
+                          child: Text('Tháng ${index + 1}'),
+                        ),
+                      ),
+                    ],
+                    onChanged: onMonthChanged,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    initialValue: year,
+                    decoration: const InputDecoration(
+                      labelText: 'Năm',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: years
+                        .map((item) => DropdownMenuItem<int>(value: item, child: Text(item.toString())))
+                        .toList(),
+                    onChanged: onYearChanged,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _StatCard extends StatelessWidget {
