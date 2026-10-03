@@ -43,7 +43,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist
       - name: Install official MP Windows app icon
         run: |
-          base64 --decode assets/branding/mpwindows_app_icon.jpg.b64 > /tmp/mpwindows_app_icon.jpg
+          base64 -D -i assets/branding/mpwindows_app_icon.jpg.b64 -o /tmp/mpwindows_app_icon.jpg
           python3 - <<'PY'
           import json
           import pathlib
