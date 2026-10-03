@@ -1,0 +1,42 @@
+name: Expand CRM MVP bundle
+
+on:
+  push:
+    branches:
+      - mpwindows-crm-mvp
+    paths:
+      - ".mpwindows_crm_bundle.b64"
+
+permissions:
+  contents: write
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: mpwindows-crm-mvp
+          fetch-depth: 0
+
+      - name: Expand Flutter project
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode .mpwindows_crm_bundle.b64 > /tmp/mpwindows_crm_mvp.zip
+          rm -rf /tmp/mpwindows_crm_mvp
+          mkdir -p /tmp/mpwindows_crm_mvp
+          unzip -q /tmp/mpwindows_crm_mvp.zip -d /tmp/mpwindows_crm_mvp
+          cp -R /tmp/mpwindows_crm_mvp/mpwindows_crm_mvp/. .
+          rm -f .mpwindows_crm_bundle.b64
+
+      - name: Commit expanded source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: expand MPWindows CRM MVP source" || exit 0
+          git push origin HEAD:mpwindows-crm-mvp
