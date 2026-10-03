@@ -43,15 +43,17 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'MPWindows CRM cần truy cập thư viện ảnh để lưu hình ảnh công trình.'" ios/Runner/Info.plist
       - name: Install official MP Windows app icon
         run: |
-          base64 -D -i assets/branding/mpwindows_app_icon.jpg.b64 -o /tmp/mpwindows_app_icon.jpg
           python3 - <<'PY'
+          import base64
           import json
           import pathlib
           import subprocess
 
           icon_set = pathlib.Path("ios/Runner/Assets.xcassets/AppIcon.appiconset")
           contents = json.loads((icon_set / "Contents.json").read_text())
-          source = "/tmp/mpwindows_app_icon.jpg"
+          source = pathlib.Path("/tmp/mpwindows_app_icon.jpg")
+          encoded = pathlib.Path("assets/branding/mpwindows_app_icon.jpg.b64").read_text().strip()
+          source.write_bytes(base64.b64decode(encoded, validate=True))
 
           for image in contents.get("images", []):
               filename = image.get("filename")
@@ -63,7 +65,7 @@ jobs:
               factor = float(scale.rstrip("x"))
               pixels = str(round(points * factor))
               subprocess.run(
-                  ["sips", "-s", "format", "png", "-z", pixels, pixels, source, "--out", str(icon_set / filename)],
+                  ["sips", "-s", "format", "png", "-z", pixels, pixels, str(source), "--out", str(icon_set / filename)],
                   check=True,
                   stdout=subprocess.DEVNULL,
               )
