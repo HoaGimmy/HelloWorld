@@ -78,7 +78,10 @@ class IOSNativeService {
       final id = row['id'] as int?;
       if (due == null || id == null) continue;
 
-      final fireAt = DateTime(due.year, due.month, due.day, 9);
+      final reminderEnabled = (row['reminder_enabled'] as int? ?? 1) == 1;
+      if (!reminderEnabled) continue;
+      final reminderMinutes = row['reminder_minutes'] as int? ?? 30;
+      final fireAt = due.subtract(Duration(minutes: reminderMinutes));
       if (!fireAt.isAfter(now)) continue;
 
       final customer = customerNames[row['customer_id']];
