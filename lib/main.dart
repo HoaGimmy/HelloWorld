@@ -29,6 +29,11 @@ class MPWindowsCRMApp extends StatelessWidget {
         valueListenable: ThemeColorController.instance,
         builder: (context, seedColor, _) => MaterialApp(
           debugShowCheckedModeBanner: false,
+          builder: (context, child) => GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: child ?? const SizedBox.shrink(),
+          ),
           title: 'MPWindows CRM',
           theme: ThemeData(
             useMaterial3: true,
@@ -66,7 +71,10 @@ class _HomeScreenState extends State<HomeScreen> {
       body: pages[index],
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
-        onDestinationSelected: (v) => setState(() => index = v),
+        onDestinationSelected: (v) {
+          FocusManager.instance.primaryFocus?.unfocus();
+          setState(() => index = v);
+        },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Tổng quan'),
           NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: 'Khách hàng'),
