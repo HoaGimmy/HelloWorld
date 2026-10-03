@@ -16,7 +16,7 @@ class DatabaseService {
     final path = dir.path + '/mpwindows_crm.db';
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, _) async {
         await db.execute(
           'CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,phone TEXT,zalo TEXT,address TEXT,source TEXT,stage TEXT,need TEXT,budget REAL DEFAULT 0,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)',
@@ -34,15 +34,34 @@ class DatabaseService {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createBusinessTables(db);
+        if (oldVersion < 3) await _upgradeBusinessTablesV3(db);
       },
     );
   }
 
   static Future<void> _createBusinessTables(Database db) async {
-    await db.execute('CREATE TABLE IF NOT EXISTS projects(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,name TEXT NOT NULL,address TEXT,category TEXT,aluminum_system TEXT,accessory TEXT,status TEXT,start_date TEXT,install_date TEXT,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)');
-    await db.execute('CREATE TABLE IF NOT EXISTS quotes(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,amount REAL DEFAULT 0,status TEXT,valid_until TEXT,note TEXT,created_at TEXT NOT NULL)');
-    await db.execute('CREATE TABLE IF NOT EXISTS contracts(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,value REAL DEFAULT 0,signed_at TEXT,install_date TEXT,warranty_months INTEGER DEFAULT 12,status TEXT,note TEXT,created_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS projects(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,name TEXT NOT NULL,address TEXT,category TEXT,aluminum_type TEXT,aluminum_system TEXT,accessory TEXT,dimensions TEXT,quantity REAL DEFAULT 0,status TEXT,start_date TEXT,production_date TEXT,install_date TEXT,photo_paths TEXT,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS quotes(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,amount REAL DEFAULT 0,status TEXT,valid_until TEXT,file_path TEXT,note TEXT,created_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS contracts(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,value REAL DEFAULT 0,signed_at TEXT,install_date TEXT,warranty_months INTEGER DEFAULT 12,status TEXT,file_path TEXT,note TEXT,created_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,contract_id INTEGER NOT NULL,customer_id INTEGER NOT NULL,amount REAL DEFAULT 0,paid_at TEXT NOT NULL,method TEXT,note TEXT)');
+  }
+
+  static Future<void> _upgradeBusinessTablesV3(Database db) async {
+    Future<void> addColumn(String table, String definition) async {
+      try {
+        await db.execute('ALTER TABLE $table ADD COLUMN $definition');
+      } catch (_) {
+        // Column already exists or the table was freshly created.
+      }
+    }
+
+    await addColumn('projects', 'aluminum_type TEXT');
+    await addColumn('projects', 'dimensions TEXT');
+    await addColumn('projects', 'quantity REAL DEFAULT 0');
+    await addColumn('projects', 'production_date TEXT');
+    await addColumn('projects', 'photo_paths TEXT');
+    await addColumn('quotes', 'file_path TEXT');
+    await addColumn('contracts', 'file_path TEXT');
   }
 
   Future<List<Customer>> getCustomers({String query = ''}) async {
