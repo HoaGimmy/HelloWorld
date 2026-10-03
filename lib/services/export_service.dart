@@ -102,8 +102,10 @@ class ExportService {
 
     projectsSheet.appendRow([
       TextCellValue('ID'), TextCellValue('Customer ID'), TextCellValue('Tên công trình'),
-      TextCellValue('Địa chỉ'), TextCellValue('Hạng mục'), TextCellValue('Hệ nhôm'),
-      TextCellValue('Phụ kiện'), TextCellValue('Tiến độ'), TextCellValue('Ghi chú'),
+      TextCellValue('Địa chỉ'), TextCellValue('Hạng mục'), TextCellValue('Hãng nhôm'),
+      TextCellValue('Hệ nhôm'), TextCellValue('Phụ kiện'), TextCellValue('Kích thước'),
+      TextCellValue('Số lượng'), TextCellValue('Ngày sản xuất'), TextCellValue('Ngày lắp đặt'),
+      TextCellValue('Hình ảnh'), TextCellValue('Tiến độ'), TextCellValue('Ghi chú'),
     ]);
     for (final row in projects) {
       projectsSheet.appendRow([
@@ -112,8 +114,14 @@ class ExportService {
         TextCellValue((row['name'] ?? '').toString()),
         TextCellValue((row['address'] ?? '').toString()),
         TextCellValue((row['category'] ?? '').toString()),
+        TextCellValue((row['aluminum_brand'] ?? '').toString()),
         TextCellValue((row['aluminum_system'] ?? '').toString()),
         TextCellValue((row['accessory'] ?? '').toString()),
+        TextCellValue((row['dimensions'] ?? '').toString()),
+        TextCellValue((row['quantity'] ?? '').toString()),
+        TextCellValue((row['production_date'] ?? '').toString()),
+        TextCellValue((row['install_date'] ?? '').toString()),
+        TextCellValue((row['photo_paths'] ?? '').toString()),
         TextCellValue((row['status'] ?? '').toString()),
         TextCellValue((row['note'] ?? '').toString()),
       ]);
@@ -122,7 +130,7 @@ class ExportService {
     quotesSheet.appendRow([
       TextCellValue('ID'), TextCellValue('Customer ID'), TextCellValue('Project ID'),
       TextCellValue('Mã báo giá'), TextCellValue('Giá trị'), TextCellValue('Trạng thái'),
-      TextCellValue('Ghi chú'), TextCellValue('Ngày tạo'),
+      TextCellValue('File báo giá'), TextCellValue('Ghi chú'), TextCellValue('Ngày tạo'),
     ]);
     for (final row in quotes) {
       quotesSheet.appendRow([
@@ -132,6 +140,7 @@ class ExportService {
         TextCellValue((row['code'] ?? '').toString()),
         TextCellValue((row['amount'] ?? '').toString()),
         TextCellValue((row['status'] ?? '').toString()),
+        TextCellValue((row['file_path'] ?? '').toString()),
         TextCellValue((row['note'] ?? '').toString()),
         TextCellValue((row['created_at'] ?? '').toString()),
       ]);
@@ -140,7 +149,8 @@ class ExportService {
     contractsSheet.appendRow([
       TextCellValue('ID'), TextCellValue('Customer ID'), TextCellValue('Project ID'),
       TextCellValue('Mã hợp đồng'), TextCellValue('Giá trị'), TextCellValue('Ngày ký'),
-      TextCellValue('Bảo hành tháng'), TextCellValue('Trạng thái'), TextCellValue('Ghi chú'),
+      TextCellValue('Ngày lắp đặt'), TextCellValue('Bảo hành tháng'), TextCellValue('Trạng thái'),
+      TextCellValue('File hợp đồng'), TextCellValue('Ghi chú'),
     ]);
     for (final row in contracts) {
       contractsSheet.appendRow([
@@ -150,8 +160,10 @@ class ExportService {
         TextCellValue((row['code'] ?? '').toString()),
         TextCellValue((row['value'] ?? '').toString()),
         TextCellValue((row['signed_at'] ?? '').toString()),
+        TextCellValue((row['install_date'] ?? '').toString()),
         TextCellValue((row['warranty_months'] ?? '').toString()),
         TextCellValue((row['status'] ?? '').toString()),
+        TextCellValue((row['file_path'] ?? '').toString()),
         TextCellValue((row['note'] ?? '').toString()),
       ]);
     }
