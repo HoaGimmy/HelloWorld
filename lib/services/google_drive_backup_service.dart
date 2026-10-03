@@ -115,7 +115,13 @@ class GoogleDriveBackupService {
       $fields: 'files(id,name)',
       pageSize: 10,
     );
-    final existing = list.files?.where((f) => f.id != null).firstOrNull;
+    drive.File? existing;
+    for (final item in list.files ?? const <drive.File>[]) {
+      if (item.id != null) {
+        existing = item;
+        break;
+      }
+    }
     if (existing?.id != null) return existing!.id!;
 
     final created = await api.files.create(
