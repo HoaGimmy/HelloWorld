@@ -489,6 +489,8 @@ class DatabaseService {
       'contracts': await count(stage: 'Chốt hợp đồng'),
       'surveys': await count(stage: 'Khảo sát'),
       'quotes': await count(stage: 'Báo giá'),
+      'consulting': await count(stage: 'Đang tư vấn'),
+      'negotiating': await count(stage: 'Đàm phán'),
     };
   }
 }
