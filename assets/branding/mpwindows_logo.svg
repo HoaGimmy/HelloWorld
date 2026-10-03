@@ -1,15 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 230">
-  <rect width="760" height="230" fill="#ffffff"/>
-  <g transform="translate(18 18)">
-    <rect width="194" height="194" rx="30" fill="#0B5AA6"/>
-    <path d="M38 121V49c0-11 6-16 15-16 6 0 11 3 15 9l27 42 27-42c4-6 9-9 15-9 9 0 15 5 15 16v72h-26V77l-21 33c-3 5-6 7-10 7s-7-2-10-7L64 77v44H38z" fill="#ffffff"/>
-    <path d="M64 69l34 61c3 6 8 9 14 9s11-3 14-9l32-61h-31l-15 34-18-34H64z" fill="#ffffff"/>
-    <path d="M132 117l18 33 26-50h-28l-16 17z" fill="#ffffff"/>
-  </g>
-  <g transform="translate(245 54)">
-    <text x="0" y="52" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700" fill="#0B5AA6">MP WINDOWS</text>
-    <text x="0" y="105" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="600" letter-spacing="2" fill="#0B5AA6">ALUMINUM GLASS</text>
-    <line x1="0" y1="128" x2="475" y2="128" stroke="#D9E5F0" stroke-width="2"/>
-    <text x="0" y="162" font-family="Arial, Helvetica, sans-serif" font-size="23" font-style="italic" fill="#38556F">Trung thực dẫn đầu - cửa sáng bền lâu.</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 430">
+<defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#B96A16"/>
+    <stop offset=".24" stop-color="#FFD94A"/>
+    <stop offset=".5" stop-color="#FFF6A0"/>
+    <stop offset=".76" stop-color="#D7A13A"/>
+    <stop offset="1" stop-color="#B86714"/>
+  </linearGradient>
+</defs>
+<rect width="1000" height="430" fill="#FFFFFF"/>
+<g fill="url(#gold)">
+  <path d="M160 150 C310 25 600 15 725 125 L694 125 C570 48 340 62 218 150 Z"/>
+  <path d="M165 290 C310 420 555 413 660 327 L620 327 C505 382 315 372 210 290 Z"/>
+  <text x="62" y="285" font-family="Georgia,Times New Roman,serif" font-size="190" font-weight="700">MP</text>
+  <text x="340" y="252" font-family="Arial,Helvetica,sans-serif" font-size="113" font-weight="600" letter-spacing="2">WINDOWS</text>
+</g>
+<g fill="#202020" font-family="Arial,Helvetica,sans-serif">
+  <text x="415" y="317" font-size="35" letter-spacing="8">PRECISION. INTEGRITY</text>
+  <rect x="355" y="297" width="42" height="2"/>
+  <rect x="860" y="297" width="42" height="2"/>
+</g>
 </svg>
