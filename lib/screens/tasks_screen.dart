@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/customer.dart';
 import '../services/database_service.dart';
+import '../services/ios_native_service.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -125,7 +126,10 @@ class _TasksScreenState extends State<TasksScreen> {
 
     title.dispose();
     note.dispose();
-    if (saved == true) _load();
+    if (saved == true) {
+      await _load();
+      await IOSNativeService.instance.syncAll();
+    }
   }
 
   @override
@@ -159,7 +163,8 @@ class _TasksScreenState extends State<TasksScreen> {
                               value: completed,
                               onChanged: (value) async {
                                 await DatabaseService.instance.setTaskCompleted(id, value ?? false);
-                                _load();
+                                await _load();
+                                await IOSNativeService.instance.syncAll();
                               },
                               title: Text(
                                 task['title'] as String? ?? '',
