@@ -24,7 +24,7 @@ class MPWindowsCRMApp extends StatelessWidget {
         title: 'MPWindows CRM',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0B5AA6)),
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB07A1B)),
           inputDecorationTheme: const InputDecorationTheme(isDense: true),
         ),
         initialRoute: '/',
