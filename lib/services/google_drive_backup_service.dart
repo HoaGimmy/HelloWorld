@@ -148,11 +148,11 @@ class GoogleDriveBackupService {
   }
 
   Future<File?> chooseBackupFile() async {
-    final picked = await FilePicker().pickFiles(
+    final picked = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
     );
-    final path = picked?.files.single.path;
+    final path = picked.isEmpty ? null : picked.single.path;
     return path == null ? null : File(path);
   }
 
