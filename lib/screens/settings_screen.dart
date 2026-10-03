@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/theme_color_controller.dart';
+import 'backup_settings_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -128,6 +129,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     label: const Text('Áp dụng màu'),
                   ),
                 ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Dữ liệu',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 0,
+            child: ListTile(
+              leading: const Icon(Icons.cloud_sync_outlined),
+              title: const Text('Sao lưu & dữ liệu'),
+              subtitle: const Text('Google Drive · Xuất file · Khôi phục'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BackupSettingsScreen()),
               ),
             ),
           ),
