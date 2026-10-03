@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:excel/excel.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -107,7 +108,7 @@ class ExportService {
       ShareParams(
         title: 'Xuất dữ liệu MPWindows CRM',
         text: 'File dữ liệu MPWindows CRM',
-        files: [XFile(path)],
+        files: [XFile.fileSystem(path: path)],
         fileNameOverrides: ['MPWindows_CRM.xlsx'],
       ),
     );
