@@ -16,7 +16,7 @@ class DatabaseService {
     final path = dir.path + '/mpwindows_crm.db';
     return openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: (db, _) async {
         await db.execute(
           'CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,phone TEXT,zalo TEXT,address TEXT,source TEXT,stage TEXT,need TEXT,budget REAL DEFAULT 0,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)',
@@ -31,12 +31,20 @@ class DatabaseService {
           'CREATE TABLE appointments(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,title TEXT NOT NULL,starts_at TEXT NOT NULL,duration_minutes INTEGER DEFAULT 60,location TEXT,note TEXT,completed INTEGER DEFAULT 0)',
         );
         await _createBusinessTables(db);
+        await _createSettingsTable(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createBusinessTables(db);
         if (oldVersion < 3) await _upgradeBusinessTablesV3(db);
         if (oldVersion < 4) await _upgradeBusinessTablesV4(db);
+        if (oldVersion < 5) await _createSettingsTable(db);
       },
+    );
+  }
+
+  static Future<void> _createSettingsTable(Database db) async {
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS app_settings(setting_key TEXT PRIMARY KEY, setting_value TEXT NOT NULL)',
     );
   }
 
@@ -197,6 +205,36 @@ class DatabaseService {
     });
   }
 
+  Future<int> updateAppointment({
+    required int id,
+    int? customerId,
+    required String title,
+    required String startsAt,
+    required int durationMinutes,
+    required String location,
+    required String note,
+  }) async {
+    final database = await db;
+    return database.update(
+      'appointments',
+      {
+        'customer_id': customerId,
+        'title': title,
+        'starts_at': startsAt,
+        'duration_minutes': durationMinutes,
+        'location': location,
+        'note': note,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteAppointment(int id) async {
+    final database = await db;
+    return database.delete('appointments', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<List<Map<String, Object?>>> getAppointmentsForDay(DateTime date) async {
     final database = await db;
     final prefix = date.toIso8601String().substring(0, 10);
@@ -264,6 +302,27 @@ class DatabaseService {
     final contractValue = ((contractRows.first['total'] ?? 0) as num).toDouble();
     final paid = ((paymentRows.first['total'] ?? 0) as num).toDouble();
     return {'contractValue': contractValue, 'paid': paid, 'receivable': contractValue - paid};
+  }
+
+  Future<String?> getSetting(String key) async {
+    final database = await db;
+    final rows = await database.query(
+      'app_settings',
+      columns: ['setting_value'],
+      where: 'setting_key = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.first['setting_value'] as String?;
+  }
+
+  Future<void> setSetting(String key, String value) async {
+    final database = await db;
+    await database.insert(
+      'app_settings',
+      {'setting_key': key, 'setting_value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<Map<String, int>> getCustomerStats() async {
