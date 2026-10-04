@@ -92,6 +92,36 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
         }
       });
 
+  Future<void> _mergeImport() => _perform(() async {
+        final file = await GoogleDriveBackupService.instance.chooseBackupFile();
+        if (file == null || !mounted) return;
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Nhập & gộp dữ liệu?'),
+            content: const Text(
+              'Dữ liệu trong file sẽ được thêm vào CRM hiện tại, không xóa dữ liệu đang có. '
+              'Các liên kết khách hàng, công trình, hợp đồng và thanh toán sẽ được tự ánh xạ sang ID mới. '
+              'Cài đặt Google/sao lưu trên máy sẽ được giữ nguyên.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Nhập & gộp')),
+            ],
+          ),
+        );
+        if (ok != true) return;
+        final result = await GoogleDriveBackupService.instance.mergeFromFile(file);
+        if (mounted) {
+          final customers = result['customers'] ?? 0;
+          final projects = result['projects'] ?? 0;
+          final contracts = result['contracts'] ?? 0;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Đã gộp thành công: $customers khách · $projects công trình · $contracts hợp đồng.')),
+          );
+        }
+      });
+
   @override
   Widget build(BuildContext context) {
     final email = status['email'];
@@ -198,9 +228,16 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
                 ),
                 const Divider(height: 1),
                 ListTile(
+                  leading: const Icon(Icons.merge_type),
+                  title: const Text('Nhập dữ liệu & gộp'),
+                  subtitle: const Text('Thêm dữ liệu JSON vào CRM hiện tại, không xóa dữ liệu cũ'),
+                  onTap: busy ? null : _mergeImport,
+                ),
+                const Divider(height: 1),
+                ListTile(
                   leading: const Icon(Icons.restore),
                   title: const Text('Khôi phục từ file'),
-                  subtitle: const Text('Phục hồi toàn bộ dữ liệu CRM'),
+                  subtitle: const Text('Thay thế toàn bộ dữ liệu hiện tại bằng bản sao lưu'),
                   onTap: busy ? null : _restore,
                 ),
               ],
