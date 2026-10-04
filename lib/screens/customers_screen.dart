@@ -20,6 +20,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   List<Customer> customers = [];
   bool loading = true;
   String? selectedStage;
+  DateTime? selectedMonth;
 
   @override
   void initState() {
@@ -36,9 +37,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   Future<void> _load() async {
     final data = await DatabaseService.instance.getCustomers(query: searchController.text);
-    final filtered = selectedStage == null
+    var filtered = selectedStage == null
         ? data
         : data.where((customer) => customer.stage == selectedStage).toList();
+    if (selectedMonth != null) {
+      filtered = filtered.where((customer) {
+        final created = DateTime.tryParse(customer.createdAt);
+        return created != null &&
+            created.year == selectedMonth!.year &&
+            created.month == selectedMonth!.month;
+      }).toList();
+    }
     if (!mounted) return;
     setState(() { customers = filtered; loading = false; });
   }
@@ -65,18 +74,32 @@ class _CustomersScreenState extends State<CustomersScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: TextField(
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
                     textCapitalization: TextCapitalization.sentences,
-              controller: searchController,
-              decoration: InputDecoration(
-                hintText: 'Tìm tên, số điện thoại, địa chỉ...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: searchController.text.isEmpty
-                    ? null
-                    : IconButton(onPressed: () => searchController.clear(), icon: const Icon(Icons.clear)),
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-              ),
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Tìm tên, SĐT, địa chỉ...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: searchController.text.isEmpty
+                          ? null
+                          : IconButton(onPressed: () => searchController.clear(), icon: const Icon(Icons.clear)),
+                      filled: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _MonthYearFilter(
+                  value: selectedMonth,
+                  onChanged: (value) {
+                    setState(() => selectedMonth = value);
+                    _load();
+                  },
+                ),
+              ],
             ),
           ),
           SizedBox(
@@ -145,6 +168,61 @@ class _CustomersScreenState extends State<CustomersScreen> {
       ),
     );
   }
+}
+
+class _MonthYearFilter extends StatelessWidget {
+  final DateTime? value;
+  final ValueChanged<DateTime?> onChanged;
+  const _MonthYearFilter({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<DateTime?>(
+        tooltip: 'Lọc theo tháng/năm',
+        onSelected: onChanged,
+        itemBuilder: (_) {
+          final now = DateTime.now();
+          return <PopupMenuEntry<DateTime?>>[
+            const PopupMenuItem<DateTime?>(value: null, child: Text('Tất cả thời gian')),
+            const PopupMenuDivider(),
+            ...List.generate(24, (index) {
+              final date = DateTime(now.year, now.month - index);
+              return PopupMenuItem<DateTime?>(
+                value: date,
+                child: Text('Tháng ${DateFormat('MM/yyyy').format(date)}'),
+              );
+            }),
+          ];
+        },
+        child: Container(
+          height: 56,
+          constraints: const BoxConstraints(minWidth: 58, maxWidth: 142),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: value == null
+                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                : Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.calendar_month_outlined, size: 21),
+              if (value != null) ...[
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    DateFormat('MM/yyyy').format(value!),
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+              const SizedBox(width: 2),
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+            ],
+          ),
+        ),
+      );
 }
 
 class _StageFilterChip extends StatelessWidget {
