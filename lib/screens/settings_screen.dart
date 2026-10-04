@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/theme_color_controller.dart';
 import 'backup_settings_screen.dart';
+import 'follow_up_settings_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -146,6 +147,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _hexController.text = _hexOf(ThemeColorController.instance.value);
                 if (mounted) setState(() {});
               },
+            ),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'Chăm sóc khách hàng',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 0,
+            child: ListTile(
+              leading: const Icon(Icons.notifications_active_outlined),
+              title: const Text('Quy tắc nhắc chăm sóc'),
+              subtitle: const Text('Khách mới · Tư vấn · Báo giá · Đàm phán'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FollowUpSettingsScreen()),
+              ),
             ),
           ),
           const SizedBox(height: 28),
