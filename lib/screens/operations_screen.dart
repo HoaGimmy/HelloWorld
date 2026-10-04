@@ -161,6 +161,29 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                   onChanged: (v) => setModalState(() => customerId = v),
                 ),
                 const SizedBox(height: 10),
+                Builder(
+                  builder: (_) {
+                    Customer? selectedCustomer;
+                    for (final customer in customers) {
+                      if (customer.id == customerId) {
+                        selectedCustomer = customer;
+                        break;
+                      }
+                    }
+                    return TextFormField(
+                      key: ValueKey('project-customer-phone-${selectedCustomer?.id}-${selectedCustomer?.phone}'),
+                      initialValue: selectedCustomer?.phone ?? '',
+                      readOnly: true,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Số điện thoại khách hàng',
+                        prefixIcon: Icon(Icons.phone_outlined),
+                        hintText: 'Chưa có số điện thoại',
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
                 TextField(
                     textCapitalization: TextCapitalization.sentences,controller: name, decoration: const InputDecoration(labelText: 'Tên công trình *')),
                 const SizedBox(height: 10),
