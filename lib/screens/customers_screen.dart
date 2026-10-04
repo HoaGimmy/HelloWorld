@@ -207,6 +207,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   final note = TextEditingController();
   late String source;
   late String stage;
+  String? province;
   bool saving = false;
 
   @override
@@ -217,6 +218,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     phone.text = c?.phone ?? '';
     zalo.text = c?.zalo ?? '';
     address.text = c?.address ?? '';
+    province = _detectProvince(c?.address ?? '');
     need.text = c?.need ?? '';
     budget.text = c == null || c.budget == 0 ? '' : NumberFormat.decimalPattern('vi_VN').format(c.budget);
     note.text = c?.note ?? '';
@@ -231,6 +233,22 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     super.dispose();
   }
 
+  String? _detectProvince(String value) {
+    final normalized = value.toLowerCase();
+    for (final item in vietnamProvinces) {
+      if (normalized.contains(item.toLowerCase())) return item;
+    }
+    return null;
+  }
+
+  String _fullAddress() {
+    final detail = address.text.trim();
+    final city = province?.trim() ?? '';
+    if (city.isEmpty) return detail;
+    if (detail.toLowerCase().contains(city.toLowerCase())) return detail;
+    return detail.isEmpty ? city : '$detail, $city';
+  }
+
   Future<void> _save() async {
     if (!formKey.currentState!.validate()) return;
     setState(() => saving = true);
@@ -241,7 +259,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       name: name.text.trim(),
       phone: phone.text.trim(),
       zalo: zalo.text.trim(),
-      address: address.text.trim(),
+      address: _fullAddress(),
       source: source,
       stage: stage,
       need: need.text.trim(),
@@ -294,6 +312,17 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
           const SizedBox(height: 12),
           TextFormField(
                     textCapitalization: TextCapitalization.sentences,controller: zalo, decoration: dec('Zalo', Icons.chat_bubble_outline)),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: province,
+            isExpanded: true,
+            decoration: dec('Tỉnh/Thành phố', Icons.location_city_outlined),
+            hint: const Text('Chọn Tỉnh/Thành phố'),
+            items: vietnamProvinces
+                .map((x) => DropdownMenuItem(value: x, child: Text(x, overflow: TextOverflow.ellipsis)))
+                .toList(),
+            onChanged: (v) => setState(() => province = v),
+          ),
           const SizedBox(height: 12),
           TextFormField(
                     textCapitalization: TextCapitalization.sentences,controller: address, decoration: dec('Địa chỉ', Icons.location_on_outlined)),
