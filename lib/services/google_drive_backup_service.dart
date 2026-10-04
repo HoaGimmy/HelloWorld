@@ -43,6 +43,12 @@ class GoogleDriveBackupService {
       if (account == null) {
         throw StateError('Đăng nhập Google đã bị hủy.');
       }
+      final granted = await _googleSignIn.requestScopes([_scope]);
+      if (!granted) {
+        throw StateError(
+          'Google chưa cấp quyền Drive. Hãy chọn Cho phép để MPWindows CRM sao lưu dữ liệu.',
+        );
+      }
       await DatabaseService.instance.setSetting('drive_backup_email', account.email);
       return account;
     } catch (error) {
@@ -81,6 +87,8 @@ class GoogleDriveBackupService {
 
     final existing = await _googleSignIn.signInSilently();
     if (existing == null) return false;
+    final granted = await _googleSignIn.canAccessScopes([_scope]);
+    if (!granted) return false;
     await backupToDrive();
     return true;
   }
