@@ -88,6 +88,7 @@ class _TasksScreenState extends State<TasksScreen> {
               const SizedBox(height: 10),
               SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Nhắc nhở', style: TextStyle(fontWeight: FontWeight.w700)), value: reminderEnabled, onChanged: (v) => setSheet(() => reminderEnabled = v)),
               if (reminderEnabled) DropdownButtonFormField<int>(initialValue: reminderMinutes, decoration: const InputDecoration(labelText: 'Thời gian nhắc', prefixIcon: Icon(Icons.schedule), border: OutlineInputBorder()), items: const [
+                DropdownMenuItem(value: 0, child: Text('Đúng giờ')),
                 DropdownMenuItem(value: 15, child: Text('15 phút trước')),
                 DropdownMenuItem(value: 30, child: Text('30 phút trước')),
                 DropdownMenuItem(value: 60, child: Text('1 giờ trước')),
