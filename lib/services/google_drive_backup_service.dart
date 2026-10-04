@@ -268,14 +268,17 @@ class GoogleDriveBackupService {
     }
   }
 
-  Future<void> backupBothNow() async {
+  Future<Map<String, String?>> backupBothNow() async {
     Object? jsonError;
     Object? sheetsError;
     try { await backupToDrive(); } catch (e) { jsonError = e; }
     try { await syncToGoogleSheets(); } catch (e) { sheetsError = e; }
-    if (jsonError != null || sheetsError != null) {
-      throw StateError('JSON: ${jsonError ?? 'OK'} · Google Sheets: ${sheetsError ?? 'OK'}');
-    }
+    return {
+      'json': jsonError == null ? 'ok' : 'error',
+      'sheets': sheetsError == null ? 'ok' : 'error',
+      'jsonError': jsonError?.toString(),
+      'sheetsError': sheetsError?.toString(),
+    };
   }
 
   Future<String> _findOrCreateFolder(drive.DriveApi api) async {
