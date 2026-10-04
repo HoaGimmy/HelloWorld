@@ -26,6 +26,7 @@ class ExportService {
     final projectsSheet = excel['CongTrinh'];
     final quotesSheet = excel['BaoGia'];
     final contractsSheet = excel['HopDong'];
+    final commissionSheet = excel['HoaHong'];
     final paymentsSheet = excel['ThuTien'];
 
     customersSheet.appendRow([
@@ -151,6 +152,8 @@ class ExportService {
       TextCellValue('ID'), TextCellValue('Customer ID'), TextCellValue('Project ID'),
       TextCellValue('Mã hợp đồng'), TextCellValue('Giá trị'), TextCellValue('Ngày ký'),
       TextCellValue('Ngày lắp đặt'), TextCellValue('Bảo hành tháng'), TextCellValue('Trạng thái'),
+      TextCellValue('Lợi nhuận %'), TextCellValue('Chi phí CT %'), TextCellValue('Tỷ lệ hưởng %'),
+      TextCellValue('Hoa hồng đã nhận'), TextCellValue('Ngày nhận hoa hồng'),
       TextCellValue('File hợp đồng'), TextCellValue('Ghi chú'),
     ]);
     for (final row in contracts) {
@@ -164,8 +167,46 @@ class ExportService {
         TextCellValue((row['install_date'] ?? '').toString()),
         TextCellValue((row['warranty_months'] ?? '').toString()),
         TextCellValue((row['status'] ?? '').toString()),
+        TextCellValue((row['profit_percent'] ?? 0).toString()),
+        TextCellValue((row['company_cost_percent'] ?? 8).toString()),
+        TextCellValue((row['commission_share_percent'] ?? 40).toString()),
+        TextCellValue((row['commission_received'] ?? 0).toString()),
+        TextCellValue((row['commission_received_at'] ?? '').toString()),
         TextCellValue((row['file_path'] ?? '').toString()),
         TextCellValue((row['note'] ?? '').toString()),
+      ]);
+    }
+
+    commissionSheet.appendRow([
+      TextCellValue('Mã hợp đồng'), TextCellValue('Khách hàng'), TextCellValue('Giá trị HĐ'),
+      TextCellValue('Lợi nhuận %'), TextCellValue('Chi phí CT %'), TextCellValue('LN tính hoa hồng'),
+      TextCellValue('Tỷ lệ hưởng %'), TextCellValue('Hoa hồng dự kiến'), TextCellValue('Đã nhận'),
+      TextCellValue('Còn chưa nhận'), TextCellValue('Ngày nhận'), TextCellValue('Ngày ký'),
+    ]);
+    for (final row in contracts) {
+      final value = ((row['value'] ?? 0) as num).toDouble();
+      final profitPercent = ((row['profit_percent'] ?? 0) as num).toDouble();
+      final companyPercent = ((row['company_cost_percent'] ?? 8) as num).toDouble();
+      final sharePercent = ((row['commission_share_percent'] ?? 40) as num).toDouble();
+      final basePercent = (profitPercent - companyPercent).clamp(0, 100).toDouble();
+      final commissionBase = value * basePercent / 100;
+      final commission = commissionBase * sharePercent / 100;
+      final received = ((row['commission_received'] ?? 0) as num).toDouble();
+      final remaining = (commission - received).clamp(0, double.infinity).toDouble();
+      final customer = customers.where((c) => c['id'] == row['customer_id']).firstOrNull;
+      commissionSheet.appendRow([
+        TextCellValue((row['code'] ?? '').toString()),
+        TextCellValue((customer?['name'] ?? '').toString()),
+        DoubleCellValue(value),
+        DoubleCellValue(profitPercent),
+        DoubleCellValue(companyPercent),
+        DoubleCellValue(commissionBase),
+        DoubleCellValue(sharePercent),
+        DoubleCellValue(commission),
+        DoubleCellValue(received),
+        DoubleCellValue(remaining),
+        TextCellValue((row['commission_received_at'] ?? '').toString()),
+        TextCellValue((row['signed_at'] ?? '').toString()),
       ]);
     }
 
