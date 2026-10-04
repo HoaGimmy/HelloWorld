@@ -193,10 +193,16 @@ class ExportService {
       final commission = commissionBase * sharePercent / 100;
       final received = ((row['commission_received'] ?? 0) as num).toDouble();
       final remaining = (commission - received).clamp(0, double.infinity).toDouble();
-      final customer = customers.where((c) => c['id'] == row['customer_id']).firstOrNull;
+      var customerName = '';
+      for (final customer in customers) {
+        if (customer['id'] == row['customer_id']) {
+          customerName = (customer['name'] ?? '').toString();
+          break;
+        }
+      }
       commissionSheet.appendRow([
         TextCellValue((row['code'] ?? '').toString()),
-        TextCellValue((customer?['name'] ?? '').toString()),
+        TextCellValue(customerName),
         DoubleCellValue(value),
         DoubleCellValue(profitPercent),
         DoubleCellValue(companyPercent),
