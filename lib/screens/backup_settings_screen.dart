@@ -25,12 +25,14 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
     if (mounted) setState(() => status = value);
   }
 
-  String _lastBackup() {
-    final date = DateTime.tryParse(status['lastAt'] ?? '');
+  String _formatBackup(String key) {
+    final date = DateTime.tryParse(status[key] ?? '');
     return date == null
         ? 'Chưa có bản sao lưu'
         : DateFormat('HH:mm · dd/MM/yyyy').format(date.toLocal());
   }
+
+  String _lastBackup() => _formatBackup('lastAt');
 
   Future<void> _perform(Future<void> Function() action) async {
     if (busy) return;
@@ -49,11 +51,11 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
   }
 
   Future<void> _backup() => _perform(() async {
-        final result = await GoogleDriveBackupService.instance.backupToDrive();
+        await GoogleDriveBackupService.instance.backupBothNow();
         await _load();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Đã sao lưu: ${result.fileName}')),
+            const SnackBar(content: Text('Đã sao lưu JSON và đồng bộ Google Sheets thành công.')),
           );
         }
       });
@@ -113,12 +115,14 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
                   ),
                   Text(email ?? 'Chưa kết nối tài khoản Google'),
                   const SizedBox(height: 4),
-                  Text('Lần sao lưu: ${_lastBackup()}'),
+                  Text('JSON gần nhất: ${_lastBackup()}'),
+                  const SizedBox(height: 4),
+                  Text('Google Sheets gần nhất: ${_formatBackup('sheetsLastAt')}'),
                   const SizedBox(height: 10),
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Tự động sao lưu'),
-                    subtitle: const Text('1 lần/ngày khi mở hoặc quay lại ứng dụng'),
+                    subtitle: const Text('Tự động sao lưu JSON + Google Sheets 1 lần/ngày'),
                     value: status['autoEnabled'] == '1',
                     onChanged: busy ? null : (value) => _perform(() async {
                       await GoogleDriveBackupService.instance.setAutoBackupEnabled(value);
@@ -132,7 +136,7 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
                           SnackBar(
                             content: Text(
                               value
-                                  ? 'Đã bật tự động sao lưu · 1 lần/ngày khi mở hoặc quay lại ứng dụng.'
+                                  ? 'Đã bật tự động sao lưu 2 lớp: JSON + Google Sheets.'
                                   : 'Đã tắt tự động sao lưu.',
                             ),
                           ),
@@ -169,7 +173,7 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
                       FilledButton.icon(
                         onPressed: busy ? null : _backup,
                         icon: const Icon(Icons.cloud_upload_outlined),
-                        label: const Text('Sao lưu ngay'),
+                        label: const Text('Sao lưu 2 lớp ngay'),
                       ),
                     ],
                   ),
