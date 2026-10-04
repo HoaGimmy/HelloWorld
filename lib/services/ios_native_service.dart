@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+import '../models/follow_up_item.dart';
 import 'database_service.dart';
+import 'follow_up_service.dart';
 
 class IOSNativeService {
   IOSNativeService._();
@@ -32,12 +34,14 @@ class IOSNativeService {
       database.getTasks(onlyOpen: true),
       database.getAppointmentsForDay(now),
       database.getCustomers(),
+      FollowUpService.instance.getItems(),
     ]);
 
     final upcomingAppointments = results[0] as List<Map<String, Object?>>;
     final openTasks = results[1] as List<Map<String, Object?>>;
     final todayAppointments = results[2] as List<Map<String, Object?>>;
     final customers = results[3] as List<dynamic>;
+    final followUps = results[4] as List<FollowUpItem>;
 
     final customerNames = <int, String>{};
     for (final customer in customers) {
@@ -96,6 +100,18 @@ class IOSNativeService {
       });
     }
 
+    for (final item in followUps.where((item) => !item.manualReminder).take(20)) {
+      if (!item.dueAt.isAfter(now)) continue;
+      final id = item.customer.id;
+      if (id == null) continue;
+      reminders.add({
+        'id': 'mpw.followup.$id',
+        'title': 'Khách cần chăm sóc',
+        'body': '${item.customer.name} — ${item.reason}',
+        'fireAt': item.dueAt.millisecondsSinceEpoch,
+      });
+    }
+
     final dueTodayCount = openTasks.where((row) {
       final due = DateTime.tryParse(row['due_date'] as String? ?? '');
       return due != null && !due.isAfter(endOfToday);
@@ -123,6 +139,7 @@ class IOSNativeService {
           'appointmentCount': todayAppointments.length,
           'taskCount': dueTodayCount,
           'customerCount': customers.length,
+          'followUpCount': followUps.where((item) => !item.dueAt.isAfter(now)).length,
           'nextAppointment': nextAppointment,
         },
       });
