@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../services/database_service.dart';
 import '../services/export_service.dart';
 import '../services/follow_up_service.dart';
+import '../services/google_drive_backup_service.dart';
 import '../widgets/mpwindows_brand.dart';
 import '../models/customer.dart';
 import 'customers_screen.dart';
@@ -61,6 +62,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } finally {
       if (mounted) setState(() => exporting = false);
     }
+  }
+
+  Future<void> _syncSheets() async {
+    setState(() => exporting = true);
+    try {
+      await GoogleDriveBackupService.instance.syncToGoogleSheets();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã đồng bộ dữ liệu lên Google Sheets.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Đồng bộ Google Sheets lỗi: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => exporting = false);
+    }
+  }
+
+  Future<void> _showExportOptions() async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Xuất / Đồng bộ dữ liệu', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.table_view_outlined),
+                title: const Text('Xuất file Excel (.xlsx)'),
+                subtitle: const Text('Tạo file để lưu hoặc chia sẻ'),
+                onTap: () => Navigator.pop(sheetContext, 'excel'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.cloud_sync_outlined),
+                title: const Text('Đồng bộ Google Sheets'),
+                subtitle: const Text('Cập nhật MPWindows CRM Online trên Google Drive'),
+                onTap: () => Navigator.pop(sheetContext, 'sheets'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (action == 'excel') await _export();
+    if (action == 'sheets') await _syncSheets();
   }
 
   void _openSettings() {
@@ -128,8 +183,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   icon: const Icon(Icons.business_center_outlined),
                 ),
                 IconButton(
-                  tooltip: 'Xuất Excel',
-                  onPressed: exporting ? null : _export,
+                  tooltip: 'Xuất / Đồng bộ dữ liệu',
+                  onPressed: exporting ? null : _showExportOptions,
                   icon: exporting
                       ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.file_download_outlined),
@@ -338,9 +393,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
-                    onPressed: exporting ? null : _export,
+                    onPressed: exporting ? null : _showExportOptions,
                     icon: const Icon(Icons.ios_share),
-                    label: const Text('Xuất toàn bộ dữ liệu Excel'),
+                    label: const Text('Xuất / Đồng bộ dữ liệu'),
                   ),
                 ],
               ),
