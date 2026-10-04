@@ -127,7 +127,24 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
                         await GoogleDriveBackupService.instance.autoBackupIfDue();
                         await _load();
                       }
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              value
+                                  ? 'Đã bật tự động sao lưu · 1 lần/ngày khi mở hoặc quay lại ứng dụng.'
+                                  : 'Đã tắt tự động sao lưu.',
+                            ),
+                          ),
+                        );
+                      }
                     }),
+                  ),
+                  Text(
+                    status['autoEnabled'] == '1'
+                        ? 'Trạng thái: Đang bật · Lần gần nhất: ${_lastBackup()}'
+                        : 'Trạng thái: Đang tắt',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 8),
                   Wrap(
