@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 
 const pipelineStages = <String>['Khách mới','Đã liên hệ','Đang tư vấn','Khảo sát','Báo giá','Đàm phán','Chốt hợp đồng','Thi công','Hoàn thành','Chăm sóc sau bán','Không thành công / Mất khách'];
 const leadSources = <String>['Facebook','TikTok','Zalo','Website','Giới thiệu','Khách cũ','Khác'];
+const vietnamProvinces = <String>[
+  'Hà Nội','Cao Bằng','Tuyên Quang','Điện Biên','Lai Châu','Sơn La','Lào Cai',
+  'Thái Nguyên','Lạng Sơn','Quảng Ninh','Bắc Ninh','Phú Thọ','Hải Phòng',
+  'Hưng Yên','Ninh Bình','Thanh Hóa','Nghệ An','Hà Tĩnh','Quảng Trị','Huế',
+  'Đà Nẵng','Quảng Ngãi','Gia Lai','Khánh Hòa','Đắk Lắk','Lâm Đồng','Đồng Nai',
+  'Thành phố Hồ Chí Minh','Tây Ninh','Đồng Tháp','Vĩnh Long','An Giang','Cần Thơ','Cà Mau',
+];
+
 const aluminumBrands = <String>[
   'Xingfa Việt Nam',
   'Xingfa Quảng Đông',
