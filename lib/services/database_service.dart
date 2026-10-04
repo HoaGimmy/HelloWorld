@@ -314,6 +314,16 @@ class DatabaseService {
     return database.update('projects', data, where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<int> deleteProject(int id) async {
+    final database = await db;
+    final linkedQuotes = Sqflite.firstIntValue(await database.rawQuery('SELECT COUNT(*) FROM quotes WHERE project_id = ?', [id])) ?? 0;
+    final linkedContracts = Sqflite.firstIntValue(await database.rawQuery('SELECT COUNT(*) FROM contracts WHERE project_id = ?', [id])) ?? 0;
+    if (linkedQuotes + linkedContracts > 0) {
+      throw StateError('Công trình đang được gắn với báo giá hoặc hợp đồng.');
+    }
+    return database.delete('projects', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<List<Map<String, Object?>>> getProjects({int? customerId}) async {
     final database = await db;
     return database.query('projects', where: customerId == null ? null : 'customer_id = ?', whereArgs: customerId == null ? null : [customerId], orderBy: 'updated_at DESC');
@@ -327,6 +337,11 @@ class DatabaseService {
   Future<int> updateQuote(int id, Map<String, Object?> data) async {
     final database = await db;
     return database.update('quotes', data, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteQuote(int id) async {
+    final database = await db;
+    return database.delete('quotes', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, Object?>>> getQuotes({int? customerId}) async {
@@ -344,6 +359,15 @@ class DatabaseService {
     return database.update('contracts', data, where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<int> deleteContract(int id) async {
+    final database = await db;
+    final paymentCount = Sqflite.firstIntValue(await database.rawQuery('SELECT COUNT(*) FROM payments WHERE contract_id = ?', [id])) ?? 0;
+    if (paymentCount > 0) {
+      throw StateError('Hợp đồng đã có khoản thu. Hãy xóa các khoản thu trước.');
+    }
+    return database.delete('contracts', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<List<Map<String, Object?>>> getContracts({int? customerId}) async {
     final database = await db;
     return database.query('contracts', where: customerId == null ? null : 'customer_id = ?', whereArgs: customerId == null ? null : [customerId], orderBy: 'created_at DESC');
@@ -357,6 +381,11 @@ class DatabaseService {
   Future<int> updatePayment(int id, Map<String, Object?> data) async {
     final database = await db;
     return database.update('payments', data, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deletePayment(int id) async {
+    final database = await db;
+    return database.delete('payments', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, Object?>>> getPayments({int? customerId, int? contractId}) async {
