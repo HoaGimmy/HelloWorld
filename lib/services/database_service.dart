@@ -212,6 +212,14 @@ class DatabaseService {
     return database.update('tasks', {'completed': completed ? 1 : 0}, where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<int> completeFollowUpTasks(int customerId) async {
+    final database = await db;
+    return database.rawUpdate(
+      "UPDATE tasks SET completed = 1 WHERE customer_id = ? AND completed = 0 AND note LIKE '[FOLLOW_UP]%'",
+      [customerId],
+    );
+  }
+
   Future<int> addAppointment({
     int? customerId,
     required String title,
