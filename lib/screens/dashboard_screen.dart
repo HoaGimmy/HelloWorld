@@ -8,6 +8,8 @@ import '../models/customer.dart';
 import 'customers_screen.dart';
 import 'operations_screen.dart';
 import 'settings_screen.dart';
+import 'tasks_screen.dart';
+import 'calendar_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -31,6 +33,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _future = Future.wait<Object>([
       DatabaseService.instance.getCustomerStats(year: selectedYear, month: selectedMonth),
       DatabaseService.instance.getFinanceStats(year: selectedYear, month: selectedMonth),
+      DatabaseService.instance.getTasks(onlyOpen: true),
+      DatabaseService.instance.getAppointmentsForDay(DateTime.now()),
     ]);
   }
 
@@ -84,6 +88,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final values = snapshot.data;
           final stats = values == null ? const <String, int>{} : values[0] as Map<String, int>;
           final finance = values == null ? const <String, double>{} : values[1] as Map<String, double>;
+          final tasks = values == null ? const <Map<String, Object?>>[] : values[2] as List<Map<String, Object?>>;
+          final appointments = values == null ? const <Map<String, Object?>>[] : values[3] as List<Map<String, Object?>>;
+          final overdue = tasks.where((task) {
+            final due = DateTime.tryParse(task['due_date']?.toString() ?? '');
+            return due != null && due.isBefore(DateTime.now());
+          }).length;
           final total = stats['total'] ?? 0;
           final surveys = stats['surveys'] ?? 0;
           final quotes = stats['quotes'] ?? 0;
@@ -123,7 +133,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 30),
                 children: [
                   const MPWindowsBrandHeader(),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Hôm nay',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      Text(
+                        DateFormat('dd/MM', 'vi_VN').format(DateTime.now()),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _TodayCard(
+                          icon: Icons.event_available_outlined,
+                          value: appointments.length,
+                          label: 'Lịch hẹn',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const CalendarScreen()),
+                          ).then((_) => _refresh()),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _TodayCard(
+                          icon: Icons.task_alt,
+                          value: tasks.length,
+                          label: 'Việc đang mở',
+                          warning: overdue > 0 ? '$overdue quá hạn' : null,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const TasksScreen()),
+                          ).then((_) => _refresh()),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
                   Text('CRM vận hành', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
                   const SizedBox(height: 10),
                   _PeriodFilter(
@@ -389,3 +443,59 @@ class _MoneyRow extends StatelessWidget {
         ],
       );
 }
+
+
+class _TodayCard extends StatelessWidget {
+  final IconData icon;
+  final int value;
+  final String label;
+  final String? warning;
+  final VoidCallback onTap;
+  const _TodayCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.onTap,
+    this.warning,
+  });
+
+  @override
+  Widget build(BuildContext context) => Card(
+        elevation: 0,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, color: Theme.of(context).colorScheme.primary),
+                    const Spacer(),
+                    const Icon(Icons.chevron_right, size: 20),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '$value',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                if (warning != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    warning!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );

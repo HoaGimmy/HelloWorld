@@ -39,7 +39,46 @@ class MPWindowsCRMApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
-            inputDecorationTheme: const InputDecorationTheme(isDense: true),
+            scaffoldBackgroundColor: const Color(0xFFF7F7F8),
+            appBarTheme: const AppBarTheme(
+              centerTitle: false,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              backgroundColor: Color(0xFFF7F7F8),
+              surfaceTintColor: Colors.transparent,
+              titleTextStyle: TextStyle(
+                color: Color(0xFF171717),
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            cardTheme: const CardThemeData(
+              elevation: 0,
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+              ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              isDense: true,
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            navigationBarTheme: const NavigationBarThemeData(
+              height: 68,
+              elevation: 0,
+              backgroundColor: Colors.white,
+              indicatorShape: StadiumBorder(),
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            ),
           ),
           initialRoute: '/',
           routes: {

@@ -19,6 +19,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   final searchController = TextEditingController();
   List<Customer> customers = [];
   bool loading = true;
+  String? selectedStage;
 
   @override
   void initState() {
@@ -35,8 +36,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   Future<void> _load() async {
     final data = await DatabaseService.instance.getCustomers(query: searchController.text);
+    final filtered = selectedStage == null
+        ? data
+        : data.where((customer) => customer.stage == selectedStage).toList();
     if (!mounted) return;
-    setState(() { customers = data; loading = false; });
+    setState(() { customers = filtered; loading = false; });
   }
 
   Future<void> _openForm([Customer? customer]) async {
@@ -75,6 +79,28 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ),
             ),
           ),
+          SizedBox(
+            height: 44,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              children: [
+                _StageFilterChip(
+                  label: 'Tất cả',
+                  selected: selectedStage == null,
+                  onTap: () { setState(() => selectedStage = null); _load(); },
+                ),
+                ...pipelineStages.map(
+                  (stage) => _StageFilterChip(
+                    label: stage,
+                    selected: selectedStage == stage,
+                    onTap: () { setState(() => selectedStage = stage); _load(); },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: loading
                 ? const Center(child: CircularProgressIndicator())
@@ -119,6 +145,25 @@ class _CustomersScreenState extends State<CustomersScreen> {
       ),
     );
   }
+}
+
+class _StageFilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _StageFilterChip({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: ChoiceChip(
+          label: Text(label),
+          selected: selected,
+          onSelected: (_) => onTap(),
+          showCheckmark: false,
+          labelStyle: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w500),
+        ),
+      );
 }
 
 class _EmptyCustomers extends StatelessWidget {
