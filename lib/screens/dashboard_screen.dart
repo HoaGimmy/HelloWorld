@@ -215,7 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                       Text(
-                        DateFormat('dd/MM', 'vi_VN').format(DateTime.now()),
+                        DateFormat('dd/MM/yyyy (EEE)', 'vi_VN').format(DateTime.now()),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -227,7 +227,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
-                    childAspectRatio: 1.75,
+                    childAspectRatio: 1.42,
                     children: [
                       _TodayCard(
                         icon: Icons.notifications_active_outlined,
@@ -309,7 +309,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 26),
                   Text('CRM vận hành', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
                   const SizedBox(height: 10),
                   _PeriodFilter(
@@ -336,7 +336,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 1.35,
+                    childAspectRatio: 1.55,
                     children: [
                       _StatCard('Tổng khách hàng', total.toString(), Icons.people_outline, onTap: () => _openCustomersByStage('Tổng khách hàng')),
                       _StatCard('Khảo sát', surveys.toString(), Icons.straighten, onTap: () => _openCustomersByStage('Khảo sát', stage: 'Khảo sát')),
@@ -521,14 +521,22 @@ class _StatCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, size: 28),
-              Text(value, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
-              Text(label),
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: .55), borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+                ),
+                const Spacer(),
+                const Icon(Icons.chevron_right, size: 18),
+              ]),
+              Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -636,34 +644,37 @@ class _TodayCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(15),
-            child: Column(
+            padding: const EdgeInsets.all(14),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(icon, color: Theme.of(context).colorScheme.primary),
-                    const Spacer(),
-                    const Icon(Icons.chevron_right, size: 20),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '$value',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
-                ),
-                Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                if (warning != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    warning!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                Container(
+                  width: 46,
+                  height: 46,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: .55),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ],
+                  child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('$value', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900, height: 1)),
+                      const SizedBox(height: 6),
+                      Text(label, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, height: 1.15)),
+                      if (warning != null) ...[
+                        const SizedBox(height: 5),
+                        Text(warning!, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.error)),
+                      ],
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, size: 20),
               ],
             ),
           ),
