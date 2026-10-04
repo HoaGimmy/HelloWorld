@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../services/database_service.dart';
 import '../services/export_service.dart';
+import '../services/follow_up_service.dart';
 import '../widgets/mpwindows_brand.dart';
 import '../models/customer.dart';
 import 'customers_screen.dart';
@@ -10,6 +11,7 @@ import 'operations_screen.dart';
 import 'settings_screen.dart';
 import 'tasks_screen.dart';
 import 'calendar_screen.dart';
+import 'follow_up_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -35,6 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       DatabaseService.instance.getFinanceStats(year: selectedYear, month: selectedMonth),
       DatabaseService.instance.getTasks(onlyOpen: true),
       DatabaseService.instance.getAppointmentsForDay(DateTime.now()),
+      FollowUpService.instance.getDueItems(),
     ]);
   }
 
@@ -90,6 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final finance = values == null ? const <String, double>{} : values[1] as Map<String, double>;
           final tasks = values == null ? const <Map<String, Object?>>[] : values[2] as List<Map<String, Object?>>;
           final appointments = values == null ? const <Map<String, Object?>>[] : values[3] as List<Map<String, Object?>>;
+          final followUps = values == null ? const <dynamic>[] : values[4] as List<dynamic>;
           final overdue = tasks.where((task) {
             final due = DateTime.tryParse(task['due_date']?.toString() ?? '');
             return due != null && due.isBefore(DateTime.now());
@@ -176,6 +180,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  Card(
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FollowUpScreen()),
+                      ).then((_) => _refresh()),
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: followUps.isEmpty
+                                  ? Theme.of(context).colorScheme.primaryContainer
+                                  : Theme.of(context).colorScheme.errorContainer,
+                              child: Icon(
+                                followUps.isEmpty ? Icons.task_alt : Icons.notifications_active_outlined,
+                                color: followUps.isEmpty
+                                    ? Theme.of(context).colorScheme.onPrimaryContainer
+                                    : Theme.of(context).colorScheme.onErrorContainer,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Khách cần chăm sóc', style: TextStyle(fontWeight: FontWeight.w800)),
+                                  Text(
+                                    followUps.isEmpty
+                                        ? 'Không có khách bị bỏ quên'
+                                        : '${followUps.length} khách đang cần follow-up',
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${followUps.length}',
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: followUps.isEmpty ? null : Theme.of(context).colorScheme.error,
+                                  ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 22),
                   Text('CRM vận hành', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
