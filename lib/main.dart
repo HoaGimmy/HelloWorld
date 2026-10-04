@@ -39,12 +39,12 @@ class MPWindowsCRMApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
-            scaffoldBackgroundColor: const Color(0xFFF7F7F8),
+            scaffoldBackgroundColor: const Color(0xFFF6F6F4),
             appBarTheme: const AppBarTheme(
               centerTitle: false,
               elevation: 0,
               scrolledUnderElevation: 0,
-              backgroundColor: Color(0xFFF7F7F8),
+              backgroundColor: Color(0xFFF6F6F4),
               surfaceTintColor: Colors.transparent,
               titleTextStyle: TextStyle(
                 color: Color(0xFF171717),
@@ -56,13 +56,14 @@ class MPWindowsCRMApp extends StatelessWidget {
               elevation: 0,
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(20)),
+                borderRadius: BorderRadius.all(Radius.circular(16)),
               ),
             ),
             inputDecorationTheme: InputDecorationTheme(
               isDense: true,
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Color(0xFFFFFFFF),
+              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -73,7 +74,7 @@ class MPWindowsCRMApp extends StatelessWidget {
               ),
             ),
             navigationBarTheme: const NavigationBarThemeData(
-              height: 68,
+              height: 64,
               elevation: 0,
               backgroundColor: Colors.white,
               indicatorShape: StadiumBorder(),
