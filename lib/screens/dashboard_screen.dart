@@ -499,3 +499,4 @@ class _TodayCard extends StatelessWidget {
           ),
         ),
       );
+}
