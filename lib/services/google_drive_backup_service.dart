@@ -327,6 +327,14 @@ class GoogleDriveBackupService {
     return path == null ? null : File(path);
   }
 
+  Future<Map<String, int>> mergeFromFile(File file) async {
+    final decoded = jsonDecode(await file.readAsString());
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Bản sao lưu không hợp lệ.');
+    }
+    return DatabaseService.instance.mergeBackupSnapshot(decoded);
+  }
+
   Future<void> restoreFromFile(File file) async {
     final decoded = jsonDecode(await file.readAsString());
     if (decoded is! Map<String, dynamic>) {
