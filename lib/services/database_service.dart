@@ -16,7 +16,7 @@ class DatabaseService {
     final path = dir.path + '/mpwindows_crm.db';
     return openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: (db, _) async {
         await db.execute(
           'CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,phone TEXT,zalo TEXT,address TEXT,source TEXT,stage TEXT,need TEXT,budget REAL DEFAULT 0,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)',
@@ -40,6 +40,7 @@ class DatabaseService {
         if (oldVersion < 5) await _createSettingsTable(db);
         if (oldVersion < 6) await _upgradeTasksV6(db);
         if (oldVersion < 7) await _upgradeProjectsV7(db);
+        if (oldVersion < 8) await _upgradeContractsV8(db);
       },
     );
   }
@@ -53,6 +54,14 @@ class DatabaseService {
     try { await db.execute('ALTER TABLE projects ADD COLUMN area_m2 REAL DEFAULT 0'); } catch (_) {}
   }
 
+  static Future<void> _upgradeContractsV8(Database db) async {
+    try { await db.execute('ALTER TABLE contracts ADD COLUMN profit_percent REAL DEFAULT 0'); } catch (_) {}
+    try { await db.execute('ALTER TABLE contracts ADD COLUMN company_cost_percent REAL DEFAULT 8'); } catch (_) {}
+    try { await db.execute('ALTER TABLE contracts ADD COLUMN commission_share_percent REAL DEFAULT 40'); } catch (_) {}
+    try { await db.execute('ALTER TABLE contracts ADD COLUMN commission_received REAL DEFAULT 0'); } catch (_) {}
+    try { await db.execute('ALTER TABLE contracts ADD COLUMN commission_received_at TEXT'); } catch (_) {}
+  }
+
   static Future<void> _createSettingsTable(Database db) async {
     await db.execute(
       'CREATE TABLE IF NOT EXISTS app_settings(setting_key TEXT PRIMARY KEY, setting_value TEXT NOT NULL)',
@@ -62,7 +71,7 @@ class DatabaseService {
   static Future<void> _createBusinessTables(Database db) async {
     await db.execute('CREATE TABLE IF NOT EXISTS projects(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,name TEXT NOT NULL,address TEXT,category TEXT,aluminum_brand TEXT,aluminum_type TEXT,aluminum_system TEXT,accessory TEXT,dimensions TEXT,area_m2 REAL DEFAULT 0,quantity REAL DEFAULT 0,status TEXT,start_date TEXT,production_date TEXT,install_date TEXT,photo_paths TEXT,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE IF NOT EXISTS quotes(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,amount REAL DEFAULT 0,status TEXT,valid_until TEXT,file_path TEXT,note TEXT,created_at TEXT NOT NULL)');
-    await db.execute('CREATE TABLE IF NOT EXISTS contracts(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,value REAL DEFAULT 0,signed_at TEXT,install_date TEXT,warranty_months INTEGER DEFAULT 12,status TEXT,file_path TEXT,note TEXT,created_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS contracts(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER NOT NULL,project_id INTEGER,code TEXT NOT NULL,value REAL DEFAULT 0,signed_at TEXT,install_date TEXT,warranty_months INTEGER DEFAULT 12,status TEXT,file_path TEXT,note TEXT,profit_percent REAL DEFAULT 0,company_cost_percent REAL DEFAULT 8,commission_share_percent REAL DEFAULT 40,commission_received REAL DEFAULT 0,commission_received_at TEXT,created_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,contract_id INTEGER NOT NULL,customer_id INTEGER NOT NULL,amount REAL DEFAULT 0,paid_at TEXT NOT NULL,method TEXT,note TEXT)');
   }
 
@@ -398,6 +407,50 @@ class DatabaseService {
     return {'contractValue': contractValue, 'paid': paid, 'receivable': contractValue - paid};
   }
 
+  Future<Map<String, double>> getCommissionStats({int? year, int? month}) async {
+    final database = await db;
+    final rows = year == null
+        ? await database.query('contracts')
+        : await database.query(
+            'contracts',
+            where: "COALESCE(NULLIF(signed_at,''), created_at) LIKE ?",
+            whereArgs: [_periodPattern(year: year, month: month)],
+          );
+
+    var contractValue = 0.0;
+    var grossProfit = 0.0;
+    var companyCost = 0.0;
+    var commissionBase = 0.0;
+    var commission = 0.0;
+    var received = 0.0;
+
+    for (final row in rows) {
+      final value = ((row['value'] ?? 0) as num).toDouble();
+      final profitPercent = ((row['profit_percent'] ?? 0) as num).toDouble();
+      final companyPercent = ((row['company_cost_percent'] ?? 8) as num).toDouble();
+      final sharePercent = ((row['commission_share_percent'] ?? 40) as num).toDouble();
+      final basePercent = (profitPercent - companyPercent).clamp(0, 100).toDouble();
+      final calculated = value * basePercent / 100 * sharePercent / 100;
+      contractValue += value;
+      grossProfit += value * profitPercent / 100;
+      companyCost += value * companyPercent / 100;
+      commissionBase += value * basePercent / 100;
+      commission += calculated;
+      final rowReceived = ((row['commission_received'] ?? 0) as num).toDouble();
+      received += rowReceived > calculated ? calculated : rowReceived;
+    }
+
+    return {
+      'contractValue': contractValue,
+      'grossProfit': grossProfit,
+      'companyCost': companyCost,
+      'commissionBase': commissionBase,
+      'commission': commission,
+      'received': received,
+      'remaining': (commission - received).clamp(0, double.infinity).toDouble(),
+    };
+  }
+
   Future<String?> getSetting(String key) async {
     final database = await db;
     final rows = await database.query(
@@ -440,7 +493,7 @@ class DatabaseService {
     return {
       'format': 'mpwindows-crm-backup',
       'version': 1,
-      'databaseVersion': 7,
+      'databaseVersion': 8,
       'createdAt': DateTime.now().toIso8601String(),
       'tables': tables,
     };
