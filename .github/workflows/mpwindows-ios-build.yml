@@ -1,0 +1,54 @@
+name: MPWindows CRM iOS Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - mpwindows-crm-mvp
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mpwindows-crm-mvp
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter create --platforms=android,ios .
+      - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - run: flutter test
+
+  ios-build:
+    runs-on: macos-latest
+    needs: analyze
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mpwindows-crm-mvp
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter create --platforms=ios .
+      - run: flutter pub get
+      - name: Configure native iOS notifications and WidgetKit
+        run: |
+          ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document
+          ruby native/ios/setup_native.rb
+      - name: Configure iOS app
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName MPWindows CRM" ios/Runner/Info.plist || true
+      - run: flutter build ios --release --no-codesign
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p build/unsigned_ipa/Payload
+          cp -R build/ios/iphoneos/Runner.app build/unsigned_ipa/Payload/
+          cd build/unsigned_ipa
+          zip -qry MPWindowsCRM-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MPWindowsCRM-iOS-unsigned
+          path: build/unsigned_ipa/MPWindowsCRM-unsigned.ipa
+          if-no-files-found: error
