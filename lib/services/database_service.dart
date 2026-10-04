@@ -530,6 +530,74 @@ class DatabaseService {
     });
   }
 
+  Future<Map<String, int>> mergeBackupSnapshot(Map<String, dynamic> snapshot) async {
+    if (snapshot['format'] != 'mpwindows-crm-backup') {
+      throw const FormatException('File không phải bản sao lưu MPWindows CRM.');
+    }
+    final rawTables = snapshot['tables'];
+    if (rawTables is! Map) {
+      throw const FormatException('Bản sao lưu thiếu dữ liệu.');
+    }
+
+    final database = await db;
+    final imported = <String, int>{for (final table in backupTables) table: 0};
+    await database.transaction((txn) async {
+      final idMaps = <String, Map<int, int>>{
+        for (final table in backupTables.where((t) => t != 'app_settings')) table: <int, int>{},
+      };
+
+      int? mapped(String table, Object? value) {
+        if (value == null) return null;
+        final oldId = value is int ? value : int.tryParse(value.toString());
+        return oldId == null ? null : idMaps[table]?[oldId];
+      }
+
+      Future<void> insertRows(String table, void Function(Map<String, Object?> row) remap) async {
+        final rows = rawTables[table];
+        if (rows is! List) return;
+        for (final item in rows) {
+          if (item is! Map) continue;
+          final row = Map<String, Object?>.from(item);
+          final oldId = row['id'] is int ? row['id'] as int : int.tryParse('${row['id']}');
+          row.remove('id');
+          remap(row);
+          final newId = await txn.insert(table, row);
+          if (oldId != null) idMaps[table]![oldId] = newId;
+          imported[table] = (imported[table] ?? 0) + 1;
+        }
+      }
+
+      await insertRows('customers', (_) {});
+      await insertRows('activities', (row) {
+        row['customer_id'] = mapped('customers', row['customer_id']) ?? row['customer_id'];
+      });
+      await insertRows('tasks', (row) {
+        row['customer_id'] = mapped('customers', row['customer_id']) ?? row['customer_id'];
+      });
+      await insertRows('appointments', (row) {
+        row['customer_id'] = mapped('customers', row['customer_id']) ?? row['customer_id'];
+      });
+      await insertRows('projects', (row) {
+        row['customer_id'] = mapped('customers', row['customer_id']) ?? row['customer_id'];
+      });
+      await insertRows('quotes', (row) {
+        row['customer_id'] = mapped('customers', row['customer_id']) ?? row['customer_id'];
+        row['project_id'] = mapped('projects', row['project_id']) ?? row['project_id'];
+      });
+      await insertRows('contracts', (row) {
+        row['customer_id'] = mapped('customers', row['customer_id']) ?? row['customer_id'];
+        row['project_id'] = mapped('projects', row['project_id']) ?? row['project_id'];
+      });
+      await insertRows('payments', (row) {
+        row['customer_id'] = mapped('customers', row['customer_id']) ?? row['customer_id'];
+        row['contract_id'] = mapped('contracts', row['contract_id']) ?? row['contract_id'];
+      });
+      // app_settings is intentionally not imported in merge mode so Google
+      // connection/backup settings on this device are preserved.
+    });
+    return imported;
+  }
+
   Future<Map<String, int>> getBackupCounts() async {
     final database = await db;
     final result = <String, int>{};
