@@ -51,13 +51,18 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
   }
 
   Future<void> _backup() => _perform(() async {
-        await GoogleDriveBackupService.instance.backupBothNow();
+        final result = await GoogleDriveBackupService.instance.backupBothNow();
         await _load();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã sao lưu JSON và đồng bộ Google Sheets thành công.')),
-          );
-        }
+        if (!mounted) return;
+        final jsonOk = result['json'] == 'ok';
+        final sheetsOk = result['sheets'] == 'ok';
+        final message = jsonOk && sheetsOk
+            ? 'Sao lưu 2 lớp thành công: JSON ✓ · Google Sheets ✓'
+            : 'Kết quả sao lưu: JSON ${jsonOk ? '✓' : '✕'} · Google Sheets ${sheetsOk ? '✓' : '✕'}'
+              '${!sheetsOk ? '\nGoogle Sheets chưa khả dụng. JSON vẫn đã được sao lưu an toàn.' : ''}';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), duration: const Duration(seconds: 5)),
+        );
       });
 
   Future<void> _restore() => _perform(() async {
