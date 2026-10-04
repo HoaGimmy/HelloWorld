@@ -40,6 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       DatabaseService.instance.getAppointmentsForDay(DateTime.now()),
       FollowUpService.instance.getDueItems(),
       DatabaseService.instance.getCommissionStats(year: selectedYear, month: selectedMonth),
+      DatabaseService.instance.getProjects(),
     ]);
   }
 
@@ -151,6 +152,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final appointments = values == null ? const <Map<String, Object?>>[] : values[3] as List<Map<String, Object?>>;
           final followUps = values == null ? const <dynamic>[] : values[4] as List<dynamic>;
           final commissionStats = values == null ? const <String, double>{} : values[5] as Map<String, double>;
+          final projects = values == null ? const <Map<String, Object?>>[] : values[6] as List<Map<String, Object?>>;
+          final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+          final installsToday = projects.where((project) {
+            final raw = project['install_date']?.toString();
+            final date = raw == null ? null : DateTime.tryParse(raw);
+            return date != null && DateFormat('yyyy-MM-dd').format(date) == todayKey;
+          }).length;
           final overdue = tasks.where((task) {
             final due = DateTime.tryParse(task['due_date']?.toString() ?? '');
             return due != null && due.isBefore(DateTime.now());
@@ -213,31 +221,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Row(
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1.75,
                     children: [
-                      Expanded(
-                        child: _TodayCard(
-                          icon: Icons.event_available_outlined,
-                          value: appointments.length,
-                          label: 'Lịch hẹn',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const CalendarScreen()),
-                          ).then((_) => _refresh()),
-                        ),
+                      _TodayCard(
+                        icon: Icons.notifications_active_outlined,
+                        value: followUps.length,
+                        label: 'Cần chăm sóc',
+                        warning: followUps.isNotEmpty ? 'Cần xử lý' : null,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FollowUpScreen())).then((_) => _refresh()),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _TodayCard(
-                          icon: Icons.task_alt,
-                          value: tasks.length,
-                          label: 'Việc đang mở',
-                          warning: overdue > 0 ? '$overdue quá hạn' : null,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const TasksScreen()),
-                          ).then((_) => _refresh()),
-                        ),
+                      _TodayCard(
+                        icon: Icons.event_available_outlined,
+                        value: appointments.length,
+                        label: 'Lịch hẹn',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CalendarScreen())).then((_) => _refresh()),
+                      ),
+                      _TodayCard(
+                        icon: Icons.home_repair_service_outlined,
+                        value: installsToday,
+                        label: 'Thi công hôm nay',
+                        warning: installsToday > 0 ? 'Theo lịch công trình' : null,
+                        onTap: _openOperations,
+                      ),
+                      _TodayCard(
+                        icon: Icons.task_alt,
+                        value: tasks.length,
+                        label: 'Việc đang mở',
+                        warning: overdue > 0 ? '$overdue quá hạn' : null,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TasksScreen())).then((_) => _refresh()),
                       ),
                     ],
                   ),
