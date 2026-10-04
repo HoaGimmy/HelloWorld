@@ -87,8 +87,6 @@ class GoogleDriveBackupService {
 
     final existing = await _googleSignIn.signInSilently();
     if (existing == null) return false;
-    final granted = await _googleSignIn.canAccessScopes([_scope]);
-    if (!granted) return false;
     await backupToDrive();
     return true;
   }
