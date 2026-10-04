@@ -614,6 +614,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         content: content.text.trim(),
         createdAt: DateTime.now().toIso8601String(),
       ));
+      await DatabaseService.instance.completeFollowUpTasks(widget.customerId);
+      await IOSNativeService.instance.syncAll();
       await _load();
     }
     title.dispose();
