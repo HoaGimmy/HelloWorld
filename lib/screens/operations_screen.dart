@@ -425,12 +425,17 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
   Future<void> _addContract([Map<String, Object?>? existing]) async {
     final code = TextEditingController(text: existing == null ? 'HD-${DateFormat('yyyyMMdd-HHmm').format(DateTime.now())}' : (existing['code'] ?? '').toString());
     final value = TextEditingController(text: existing == null ? '' : NumberFormat.decimalPattern('vi_VN').format(((existing['value'] as num?) ?? 0).round()));
+    final profitPercent = TextEditingController(text: existing == null ? '' : ((existing['profit_percent'] as num?) ?? 0).toString());
+    final companyCostPercent = TextEditingController(text: ((existing?['company_cost_percent'] as num?) ?? 8).toString());
+    final commissionSharePercent = TextEditingController(text: ((existing?['commission_share_percent'] as num?) ?? 40).toString());
+    final commissionReceived = TextEditingController(text: existing == null || ((existing['commission_received'] as num?) ?? 0) == 0 ? '' : NumberFormat.decimalPattern('vi_VN').format(((existing['commission_received'] as num?) ?? 0).round()));
     final warranty = TextEditingController(text: (existing?['warranty_months'] ?? 12).toString());
     final note = TextEditingController(text: (existing?['note'] ?? '').toString());
     int? customerId = existing?['customer_id'] as int? ?? defaultCustomerId();
     int? projectId = existing?['project_id'] as int?;
     String status = (existing?['status'] ?? 'Đã ký').toString();
     DateTime? installDate = DateTime.tryParse((existing?['install_date'] ?? '').toString());
+    DateTime? commissionReceivedAt = DateTime.tryParse((existing?['commission_received_at'] ?? '').toString());
     String? filePath = (existing?['file_path'] ?? '').toString();
 
     final saved = await showModalBottomSheet<bool>(
@@ -440,6 +445,14 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
       builder: (sheetContext) => StatefulBuilder(
         builder: (context, setModalState) {
           final filteredProjects = projects.where((p) => customerId == null || p['customer_id'] == customerId).toList();
+          final contractValue = double.tryParse(_moneyDigits(value.text)) ?? 0;
+          final profit = double.tryParse(profitPercent.text.replaceAll(',', '.')) ?? 0;
+          final companyCost = double.tryParse(companyCostPercent.text.replaceAll(',', '.')) ?? 0;
+          final share = double.tryParse(commissionSharePercent.text.replaceAll(',', '.')) ?? 0;
+          final commissionBasePercent = (profit - companyCost).clamp(0, 100).toDouble();
+          final calculatedCommission = contractValue * commissionBasePercent / 100 * share / 100;
+          final receivedCommission = double.tryParse(_moneyDigits(commissionReceived.text)) ?? 0;
+          final remainingCommission = (calculatedCommission - receivedCommission).clamp(0, double.infinity).toDouble();
           return Padding(
             padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).viewInsets.bottom + 20),
             child: SingleChildScrollView(
@@ -472,7 +485,82 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                     controller: value,
                     keyboardType: TextInputType.number,
                     inputFormatters: [_VndInputFormatter()],
+                    onChanged: (_) => setModalState(() {}),
                     decoration: const InputDecoration(labelText: 'Giá trị hợp đồng', suffixText: 'VNĐ'),
+                  ),
+                  const SizedBox(height: 14),
+                  Text('Hoa hồng của tôi', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: profitPercent,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          onChanged: (_) => setModalState(() {}),
+                          decoration: const InputDecoration(labelText: 'Lợi nhuận', suffixText: '%'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: companyCostPercent,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          onChanged: (_) => setModalState(() {}),
+                          decoration: const InputDecoration(labelText: 'Chi phí CT', suffixText: '%'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: commissionSharePercent,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          onChanged: (_) => setModalState(() {}),
+                          decoration: const InputDecoration(labelText: 'Tôi hưởng', suffixText: '%'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: .45),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      children: [
+                        _CommissionPreviewRow('Phần LN tính hoa hồng', money.format(contractValue * commissionBasePercent / 100) + 'đ'),
+                        const SizedBox(height: 6),
+                        _CommissionPreviewRow('Hoa hồng dự kiến', money.format(calculatedCommission) + 'đ', emphasize: true),
+                        const SizedBox(height: 6),
+                        _CommissionPreviewRow('Còn chưa nhận', money.format(remainingCommission) + 'đ'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: commissionReceived,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [_VndInputFormatter()],
+                    onChanged: (_) => setModalState(() {}),
+                    decoration: const InputDecoration(labelText: 'Hoa hồng đã nhận', suffixText: 'VNĐ'),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final d = await showDatePicker(
+                        context: context,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                        initialDate: commissionReceivedAt ?? DateTime.now(),
+                      );
+                      if (d != null) setModalState(() => commissionReceivedAt = d);
+                    },
+                    icon: const Icon(Icons.account_balance_wallet_outlined),
+                    label: Text(commissionReceivedAt == null
+                        ? 'Ngày nhận hoa hồng'
+                        : 'Đã nhận: ${DateFormat('dd/MM/yyyy').format(commissionReceivedAt!)}'),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -524,7 +612,12 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                         'project_id': projectId,
                         'code': code.text.trim(),
                         'value': double.tryParse(_moneyDigits(value.text)) ?? 0,
-                        'signed_at': now,
+                        'profit_percent': double.tryParse(profitPercent.text.replaceAll(',', '.')) ?? 0,
+                        'company_cost_percent': double.tryParse(companyCostPercent.text.replaceAll(',', '.')) ?? 8,
+                        'commission_share_percent': double.tryParse(commissionSharePercent.text.replaceAll(',', '.')) ?? 40,
+                        'commission_received': double.tryParse(_moneyDigits(commissionReceived.text)) ?? 0,
+                        'commission_received_at': commissionReceivedAt?.toIso8601String() ?? '',
+                        'signed_at': existing?['signed_at'] ?? now,
                         'install_date': installDate?.toIso8601String() ?? '',
                         'warranty_months': int.tryParse(warranty.text.trim()) ?? 12,
                         'status': status,
@@ -551,6 +644,10 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
 
     code.dispose();
     value.dispose();
+    profitPercent.dispose();
+    companyCostPercent.dispose();
+    commissionSharePercent.dispose();
+    commissionReceived.dispose();
     warranty.dispose();
     note.dispose();
     if (saved == true) _load();
@@ -696,6 +793,27 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
   }
 }
 
+class _CommissionPreviewRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool emphasize;
+  const _CommissionPreviewRow(this.label, this.value, {this.emphasize = false});
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(child: Text(label)),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: emphasize ? FontWeight.w900 : FontWeight.w700,
+              fontSize: emphasize ? 17 : 14,
+            ),
+          ),
+        ],
+      );
+}
+
 class _CustomerPicker extends StatelessWidget {
   final List<Customer> customers;
   final int? value;
@@ -792,13 +910,24 @@ class _ContractList extends StatelessWidget {
           final paid = payments.where((p) => p['contract_id'] == contractId).fold<double>(0, (sum, p) => sum + ((p['amount'] ?? 0) as num).toDouble());
           final value = ((row['value'] ?? 0) as num).toDouble();
           final debt = value - paid;
+          final profitPercent = ((row['profit_percent'] ?? 0) as num).toDouble();
+          final companyCostPercent = ((row['company_cost_percent'] ?? 8) as num).toDouble();
+          final sharePercent = ((row['commission_share_percent'] ?? 40) as num).toDouble();
+          final basePercent = (profitPercent - companyCostPercent).clamp(0, 100).toDouble();
+          final commission = value * basePercent / 100 * sharePercent / 100;
+          final commissionReceived = ((row['commission_received'] ?? 0) as num).toDouble();
+          final commissionRemaining = (commission - commissionReceived).clamp(0, double.infinity).toDouble();
           return Card(
             elevation: 0,
             child: ListTile(
               onTap: () => onEdit(row),
               leading: const CircleAvatar(child: Icon(Icons.handshake_outlined)),
               title: Text((row['code'] ?? '').toString(), style: const TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: Text(customerName(row['customer_id']) + ' • ' + projectName(row['project_id']) + '\nĐã thu ' + money.format(paid) + 'đ • Còn ' + money.format(debt < 0 ? 0 : debt) + 'đ'),
+              subtitle: Text(
+                customerName(row['customer_id']) + ' • ' + projectName(row['project_id']) +
+                '\nĐã thu ' + money.format(paid) + 'đ • Còn ' + money.format(debt < 0 ? 0 : debt) + 'đ' +
+                '\nHoa hồng ' + money.format(commission) + 'đ • Chưa nhận ' + money.format(commissionRemaining) + 'đ',
+              ),
               isThreeLine: true,
               trailing: Text(money.format(value) + 'đ', style: const TextStyle(fontWeight: FontWeight.w700)),
             ),
