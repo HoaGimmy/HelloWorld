@@ -747,6 +747,43 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     if (saved == true) _load();
   }
 
+  Future<bool> _confirmDelete(String label) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Xóa $label?'),
+            content: const Text('Dữ liệu đã xóa sẽ không thể hoàn tác.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+              FilledButton.tonal(onPressed: () => Navigator.pop(context, true), child: const Text('Xóa')),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _deleteProject(Map<String, Object?> row) async {
+    if (!await _confirmDelete('công trình')) return;
+    try { await DatabaseService.instance.deleteProject(row['id'] as int); await _load(); }
+    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Không thể xóa: $e'))); }
+  }
+
+  Future<void> _deleteQuote(Map<String, Object?> row) async {
+    if (!await _confirmDelete('báo giá')) return;
+    await DatabaseService.instance.deleteQuote(row['id'] as int); await _load();
+  }
+
+  Future<void> _deleteContract(Map<String, Object?> row) async {
+    if (!await _confirmDelete('hợp đồng')) return;
+    try { await DatabaseService.instance.deleteContract(row['id'] as int); await _load(); }
+    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Không thể xóa: $e'))); }
+  }
+
+  Future<void> _deletePayment(Map<String, Object?> row) async {
+    if (!await _confirmDelete('khoản thu')) return;
+    await DatabaseService.instance.deletePayment(row['id'] as int); await _load();
+  }
+
   void _addCurrent() {
     switch (tabController.index) {
       case 0: _addProject(); break;
@@ -783,10 +820,10 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
           : TabBarView(
               controller: tabController,
               children: [
-                _ProjectList(rows: projects, customerName: customerName, onRefresh: _load, onEdit: _addProject),
-                _QuoteList(rows: quotes, customerName: customerName, projectName: projectName, money: money, onRefresh: _load, onEdit: _addQuote),
-                _ContractList(rows: contracts, customerName: customerName, projectName: projectName, payments: payments, money: money, onRefresh: _load, onEdit: _addContract),
-                _PaymentList(rows: payments, customerName: customerName, contractCode: contractCode, money: money, onRefresh: _load, onEdit: _addPayment),
+                _ProjectList(rows: projects, customerName: customerName, onRefresh: _load, onEdit: _addProject, onDelete: _deleteProject),
+                _QuoteList(rows: quotes, customerName: customerName, projectName: projectName, money: money, onRefresh: _load, onEdit: _addQuote, onDelete: _deleteQuote),
+                _ContractList(rows: contracts, customerName: customerName, projectName: projectName, payments: payments, money: money, onRefresh: _load, onEdit: _addContract, onDelete: _deleteContract),
+                _PaymentList(rows: payments, customerName: customerName, contractCode: contractCode, money: money, onRefresh: _load, onEdit: _addPayment, onDelete: _deletePayment),
               ],
             ),
     );
@@ -834,8 +871,9 @@ class _ProjectList extends StatelessWidget {
   final List<Map<String, Object?>> rows;
   final String Function(Object?) customerName;
   final Future<void> Function(Map<String, Object?>) onEdit;
+  final Future<void> Function(Map<String, Object?>) onDelete;
   final Future<void> Function() onRefresh;
-  const _ProjectList({required this.rows, required this.customerName, required this.onRefresh, required this.onEdit});
+  const _ProjectList({required this.rows, required this.customerName, required this.onRefresh, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
@@ -846,6 +884,7 @@ class _ProjectList extends StatelessWidget {
           elevation: 0,
           child: ListTile(
             onTap: () => onEdit(row),
+            onLongPress: () => onDelete(row),
             leading: const CircleAvatar(child: Icon(Icons.home_work_outlined)),
             title: Text((row['name'] ?? '').toString(), style: const TextStyle(fontWeight: FontWeight.w700)),
             subtitle: Text([
@@ -869,8 +908,9 @@ class _QuoteList extends StatelessWidget {
   final String Function(Object?) projectName;
   final NumberFormat money;
   final Future<void> Function(Map<String, Object?>) onEdit;
+  final Future<void> Function(Map<String, Object?>) onDelete;
   final Future<void> Function() onRefresh;
-  const _QuoteList({required this.rows, required this.customerName, required this.projectName, required this.money, required this.onRefresh, required this.onEdit});
+  const _QuoteList({required this.rows, required this.customerName, required this.projectName, required this.money, required this.onRefresh, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
@@ -881,6 +921,7 @@ class _QuoteList extends StatelessWidget {
           elevation: 0,
           child: ListTile(
             onTap: () => onEdit(row),
+            onLongPress: () => onDelete(row),
             leading: const CircleAvatar(child: Icon(Icons.receipt_long_outlined)),
             title: Text((row['code'] ?? '').toString(), style: const TextStyle(fontWeight: FontWeight.w700)),
             subtitle: Text(customerName(row['customer_id']) + ' • ' + projectName(row['project_id']) + ' • ' + (row['status'] ?? '').toString()),
@@ -897,8 +938,9 @@ class _ContractList extends StatelessWidget {
   final String Function(Object?) projectName;
   final NumberFormat money;
   final Future<void> Function(Map<String, Object?>) onEdit;
+  final Future<void> Function(Map<String, Object?>) onDelete;
   final Future<void> Function() onRefresh;
-  const _ContractList({required this.rows, required this.customerName, required this.projectName, required this.payments, required this.money, required this.onRefresh, required this.onEdit});
+  const _ContractList({required this.rows, required this.customerName, required this.projectName, required this.payments, required this.money, required this.onRefresh, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
@@ -921,6 +963,7 @@ class _ContractList extends StatelessWidget {
             elevation: 0,
             child: ListTile(
               onTap: () => onEdit(row),
+            onLongPress: () => onDelete(row),
               leading: const CircleAvatar(child: Icon(Icons.handshake_outlined)),
               title: Text((row['code'] ?? '').toString(), style: const TextStyle(fontWeight: FontWeight.w700)),
               subtitle: Text(
@@ -942,8 +985,9 @@ class _PaymentList extends StatelessWidget {
   final String Function(Object?) contractCode;
   final NumberFormat money;
   final Future<void> Function(Map<String, Object?>) onEdit;
+  final Future<void> Function(Map<String, Object?>) onDelete;
   final Future<void> Function() onRefresh;
-  const _PaymentList({required this.rows, required this.customerName, required this.contractCode, required this.money, required this.onRefresh, required this.onEdit});
+  const _PaymentList({required this.rows, required this.customerName, required this.contractCode, required this.money, required this.onRefresh, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) => _ListFrame(
@@ -956,6 +1000,7 @@ class _PaymentList extends StatelessWidget {
             elevation: 0,
             child: ListTile(
               onTap: () => onEdit(row),
+            onLongPress: () => onDelete(row),
               leading: const CircleAvatar(child: Icon(Icons.payments_outlined)),
               title: Text(money.format(((row['amount'] ?? 0) as num).toDouble()) + 'đ', style: const TextStyle(fontWeight: FontWeight.w800)),
               subtitle: Text(customerName(row['customer_id']) + ' • ' + contractCode(row['contract_id']) + ' • ' + (row['method'] ?? '').toString()),
