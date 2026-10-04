@@ -38,6 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       DatabaseService.instance.getTasks(onlyOpen: true),
       DatabaseService.instance.getAppointmentsForDay(DateTime.now()),
       FollowUpService.instance.getDueItems(),
+      DatabaseService.instance.getCommissionStats(year: selectedYear, month: selectedMonth),
     ]);
   }
 
@@ -94,6 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final tasks = values == null ? const <Map<String, Object?>>[] : values[2] as List<Map<String, Object?>>;
           final appointments = values == null ? const <Map<String, Object?>>[] : values[3] as List<Map<String, Object?>>;
           final followUps = values == null ? const <dynamic>[] : values[4] as List<dynamic>;
+          final commissionStats = values == null ? const <String, double>{} : values[5] as Map<String, double>;
           final overdue = tasks.where((task) {
             final due = DateTime.tryParse(task['due_date']?.toString() ?? '');
             return due != null && due.isBefore(DateTime.now());
@@ -107,6 +109,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final contractValue = finance['contractValue'] ?? 0;
           final paid = finance['paid'] ?? 0;
           final receivable = finance['receivable'] ?? 0;
+          final commission = commissionStats['commission'] ?? 0;
+          final commissionReceived = commissionStats['received'] ?? 0;
+          final commissionRemaining = commissionStats['remaining'] ?? 0;
 
           return Scaffold(
             appBar: AppBar(
@@ -284,6 +289,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const Divider(),
                           _MoneyRow('Còn phải thu', money.format(receivable < 0 ? 0 : receivable) + 'đ', emphasize: true),
                         ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Hoa hồng của tôi', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 8),
+                  Card(
+                    elevation: 0,
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: _openOperations,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            _MoneyRow('Hoa hồng dự kiến', money.format(commission) + 'đ', emphasize: true),
+                            const Divider(),
+                            _MoneyRow('Đã nhận', money.format(commissionReceived) + 'đ'),
+                            const Divider(),
+                            _MoneyRow('Còn chưa nhận', money.format(commissionRemaining) + 'đ', emphasize: commissionRemaining > 0),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.primary),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    selectedMonth == null
+                                        ? 'Tổng hợp theo năm $selectedYear • Bấm để xem từng hợp đồng'
+                                        : 'Tổng hợp tháng $selectedMonth/$selectedYear • Bấm để xem từng hợp đồng',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right, size: 20),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
