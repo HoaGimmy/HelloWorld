@@ -30,6 +30,8 @@ import WidgetKit
         self.syncReminders(call: call, result: result)
       case "updateWidget":
         self.updateWidget(call: call, result: result)
+      case "setBadgeCount":
+        self.setBadgeCount(call: call, result: result)
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -125,6 +127,48 @@ import WidgetKit
           ))
         } else {
           result(scheduled)
+        }
+      }
+    }
+  }
+
+  private func setBadgeCount(call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard
+      let arguments = call.arguments as? [String: Any],
+      let countNumber = arguments["count"] as? NSNumber
+    else {
+      result(FlutterError(code: "BAD_ARGUMENTS", message: "Missing badge count.", details: nil))
+      return
+    }
+
+    let count = max(0, countNumber.intValue)
+    let center = UNUserNotificationCenter.current()
+    center.getNotificationSettings { settings in
+      guard settings.badgeSetting == .enabled else {
+        DispatchQueue.main.async {
+          result(FlutterError(
+            code: "BADGE_DISABLED",
+            message: "Badges are disabled for MPWindowsCRM in iOS notification settings.",
+            details: nil
+          ))
+        }
+        return
+      }
+
+      if #available(iOS 16.0, *) {
+        center.setBadgeCount(count) { error in
+          DispatchQueue.main.async {
+            if let error {
+              result(FlutterError(code: "BADGE_FAILED", message: error.localizedDescription, details: nil))
+            } else {
+              result(true)
+            }
+          }
+        }
+      } else {
+        DispatchQueue.main.async {
+          UIApplication.shared.applicationIconBadgeNumber = count
+          result(true)
         }
       }
     }
