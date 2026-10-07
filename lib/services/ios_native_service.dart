@@ -131,15 +131,24 @@ class IOSNativeService {
       }
     }
 
+    final overdueFollowUpCount =
+        followUps.where((item) => !item.dueAt.isAfter(now)).length;
+    final overdueTaskCount = openTasks.where((row) {
+      final due = DateTime.tryParse(row['due_date'] as String? ?? '');
+      return due != null && !due.isAfter(now);
+    }).length;
+    final badgeCount = overdueFollowUpCount + overdueTaskCount;
+
     try {
       await _channel.invokeMethod('syncReminders', {'items': reminders});
+      await _channel.invokeMethod('setBadgeCount', {'count': badgeCount});
       await _channel.invokeMethod('updateWidget', {
         'data': {
           'date': '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}',
           'appointmentCount': todayAppointments.length,
           'taskCount': dueTodayCount,
           'customerCount': customers.length,
-          'followUpCount': followUps.where((item) => !item.dueAt.isAfter(now)).length,
+          'followUpCount': overdueFollowUpCount,
           'nextAppointment': nextAppointment,
         },
       });
