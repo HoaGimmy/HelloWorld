@@ -16,7 +16,7 @@ class DatabaseService {
     final path = dir.path + '/mpwindows_crm.db';
     return openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: (db, _) async {
         await db.execute(
           'CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,phone TEXT,zalo TEXT,address TEXT,source TEXT,stage TEXT,need TEXT,budget REAL DEFAULT 0,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)',
@@ -28,7 +28,7 @@ class DatabaseService {
           'CREATE TABLE tasks(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,title TEXT NOT NULL,due_date TEXT NOT NULL,priority TEXT,completed INTEGER DEFAULT 0,note TEXT,reminder_enabled INTEGER DEFAULT 1,reminder_minutes INTEGER DEFAULT 30)',
         );
         await db.execute(
-          'CREATE TABLE appointments(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,title TEXT NOT NULL,starts_at TEXT NOT NULL,duration_minutes INTEGER DEFAULT 60,location TEXT,note TEXT,completed INTEGER DEFAULT 0)',
+          'CREATE TABLE appointments(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,title TEXT NOT NULL,starts_at TEXT NOT NULL,duration_minutes INTEGER DEFAULT 60,location TEXT,note TEXT,completed INTEGER DEFAULT 0,reminder_minutes INTEGER DEFAULT 30)',
         );
         await _createBusinessTables(db);
         await _createSettingsTable(db);
@@ -42,8 +42,13 @@ class DatabaseService {
         if (oldVersion < 7) await _upgradeProjectsV7(db);
         if (oldVersion < 8) await _upgradeContractsV8(db);
         if (oldVersion < 9) await _upgradeProjectsV9(db);
+        if (oldVersion < 10) await _upgradeAppointmentsV10(db);
       },
     );
+  }
+
+  static Future<void> _upgradeAppointmentsV10(Database db) async {
+    await db.execute('ALTER TABLE appointments ADD COLUMN reminder_minutes INTEGER DEFAULT 30');
   }
 
   static Future<void> _upgradeProjectsV9(Database db) async {
@@ -239,6 +244,7 @@ class DatabaseService {
     required String title,
     required String startsAt,
     required int durationMinutes,
+    int reminderMinutes = 30,
     required String location,
     required String note,
   }) async {
@@ -248,6 +254,7 @@ class DatabaseService {
       'title': title,
       'starts_at': startsAt,
       'duration_minutes': durationMinutes,
+      'reminder_minutes': reminderMinutes,
       'location': location,
       'note': note,
       'completed': 0,
@@ -260,6 +267,7 @@ class DatabaseService {
     required String title,
     required String startsAt,
     required int durationMinutes,
+    int reminderMinutes = 30,
     required String location,
     required String note,
   }) async {
@@ -271,6 +279,7 @@ class DatabaseService {
         'title': title,
         'starts_at': startsAt,
         'duration_minutes': durationMinutes,
+      'reminder_minutes': reminderMinutes,
         'location': location,
         'note': note,
       },
