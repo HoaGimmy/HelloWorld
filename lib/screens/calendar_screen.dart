@@ -76,6 +76,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     DateTime pickedDate = DateTime(initialDateTime.year, initialDateTime.month, initialDateTime.day);
     TimeOfDay pickedTime = TimeOfDay(hour: initialDateTime.hour, minute: initialDateTime.minute);
     int duration = appointment?.durationMinutes ?? 60;
+    int reminderMinutes = appointment?.reminderMinutes ?? 30;
     int? customerId = appointment?.customerId;
     if (customerId != null && !customers.any((c) => c.id == customerId)) {
       customerId = null;
@@ -151,6 +152,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   onChanged: (v) => setModalState(() => duration = v ?? duration),
                 ),
                 const SizedBox(height: 10),
+                DropdownButtonFormField<int>(
+                  initialValue: reminderMinutes,
+                  decoration: const InputDecoration(labelText: 'Nhắc nhở trước'),
+                  items: const [
+                    DropdownMenuItem(value: -1, child: Text('Không nhắc')),
+                    DropdownMenuItem(value: 0, child: Text('Đúng giờ')),
+                    DropdownMenuItem(value: 5, child: Text('5 phút')),
+                    DropdownMenuItem(value: 10, child: Text('10 phút')),
+                    DropdownMenuItem(value: 15, child: Text('15 phút')),
+                    DropdownMenuItem(value: 30, child: Text('30 phút')),
+                    DropdownMenuItem(value: 60, child: Text('1 giờ')),
+                    DropdownMenuItem(value: 120, child: Text('2 giờ')),
+                    DropdownMenuItem(value: 1440, child: Text('1 ngày')),
+                  ],
+                  onChanged: (v) => setModalState(() => reminderMinutes = v ?? reminderMinutes),
+                ),
+                const SizedBox(height: 10),
                 TextField(
                     textCapitalization: TextCapitalization.sentences,controller: location, decoration: const InputDecoration(labelText: 'Địa điểm')),
                 const SizedBox(height: 10),
@@ -182,6 +200,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         title: cleanTitle,
                         startsAt: startsAt,
                         durationMinutes: duration,
+                        reminderMinutes: reminderMinutes,
                         location: location.text.trim(),
                         note: note.text.trim(),
                       );
@@ -191,6 +210,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         title: cleanTitle,
                         startsAt: startsAt,
                         durationMinutes: duration,
+                        reminderMinutes: reminderMinutes,
                         location: location.text.trim(),
                         note: note.text.trim(),
                       );
