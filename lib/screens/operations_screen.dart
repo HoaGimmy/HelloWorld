@@ -106,6 +106,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     String aluminumBrand = (existing?['aluminum_brand'] ?? aluminumBrands.first).toString();
     if (!aluminumBrands.contains(aluminumBrand)) aluminumBrand = aluminumBrands.first;
     final aluminumType = TextEditingController(text: (existing?['aluminum_type'] ?? '').toString());
+    final glassType = TextEditingController(text: (existing?['glass_type'] ?? '').toString());
     final accessory = TextEditingController(text: (existing?['accessory'] ?? '').toString());
     final areaM2 = TextEditingController(text: existing == null ? '' : (existing['area_m2'] ?? '').toString());
     final quantity = TextEditingController(text: existing == null ? '' : (existing['quantity'] ?? '').toString());
@@ -211,6 +212,9 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                     textCapitalization: TextCapitalization.sentences,controller: aluminumType, decoration: const InputDecoration(labelText: 'Loại nhôm', hintText: 'VD: cầu cách nhiệt, slim...')),
                 const SizedBox(height: 10),
                 TextField(
+                    textCapitalization: TextCapitalization.sentences,controller: glassType, decoration: const InputDecoration(labelText: 'Loại kính', hintText: 'VD: kính cường lực 8mm, kính hộp...')),
+                const SizedBox(height: 10),
+                TextField(
                     textCapitalization: TextCapitalization.sentences,controller: accessory, decoration: const InputDecoration(labelText: 'Phụ kiện', hintText: 'VD: Cmech, Kinlong...')),
                 const SizedBox(height: 10),
                 TextField(
@@ -297,6 +301,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
                       'category': category,
                       'aluminum_brand': aluminumBrand,
                       'aluminum_type': aluminumType.text.trim(),
+                      'glass_type': glassType.text.trim(),
                       'aluminum_system': '',
                       'accessory': accessory.text.trim(),
                       'dimensions': '',
@@ -330,6 +335,7 @@ class _OperationsScreenState extends State<OperationsScreen> with SingleTickerPr
     name.dispose();
     address.dispose();
     aluminumType.dispose();
+    glassType.dispose();
     accessory.dispose();
     areaM2.dispose();
     quantity.dispose();
