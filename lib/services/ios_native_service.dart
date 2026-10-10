@@ -56,8 +56,10 @@ class IOSNativeService {
       final id = row['id'] as int?;
       if (startsAt == null || id == null || !startsAt.isAfter(now)) continue;
 
-      var fireAt = startsAt.subtract(const Duration(minutes: 30));
-      if (!fireAt.isAfter(now)) fireAt = startsAt;
+      final reminderMinutes = row['reminder_minutes'] as int? ?? 30;
+      if (reminderMinutes < 0) continue;
+      final fireAt = startsAt.subtract(Duration(minutes: reminderMinutes));
+      if (!fireAt.isAfter(now)) continue;
 
       final customer = customerNames[row['customer_id']];
       final location = (row['location'] as String? ?? '').trim();
