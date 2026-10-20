@@ -157,7 +157,7 @@ class _BackupSettingsScreenState extends State<BackupSettingsScreen> {
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Tự động sao lưu'),
-                    subtitle: const Text('Tự động sao lưu JSON + Google Sheets 1 lần/ngày'),
+                    subtitle: const Text('Sao lưu gần realtime khi có thay đổi, trong lúc mở ứng dụng'),
                     value: status['autoEnabled'] == '1',
                     onChanged: busy ? null : (value) => _perform(() async {
                       await GoogleDriveBackupService.instance.setAutoBackupEnabled(value);
