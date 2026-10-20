@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 
@@ -11,6 +13,7 @@ import 'widgets/mpwindows_brand.dart';
 import 'services/theme_color_controller.dart';
 import 'services/ios_native_service.dart';
 import 'services/google_drive_backup_service.dart';
+import 'services/database_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -97,23 +100,52 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int index = 0;
+  Timer? _backupTimer;
+  int? _observedRevision;
+  DateTime? _lastChangeSeen;
+  bool _backupCheckRunning = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _runAutoBackup();
+    _backupTimer = Timer.periodic(const Duration(seconds: 5), (_) => _checkChangedData());
+  }
+
+  Future<void> _checkChangedData() async {
+    if (_backupCheckRunning) return;
+    _backupCheckRunning = true;
+    try {
+      final revision = await DatabaseService.instance.getBackupRevision();
+      if (_observedRevision != revision) {
+        _observedRevision = revision;
+        _lastChangeSeen = DateTime.now();
+      } else if (_lastChangeSeen != null &&
+          DateTime.now().difference(_lastChangeSeen!) >= const Duration(seconds: 10)) {
+        _lastChangeSeen = null;
+        await GoogleDriveBackupService.instance.syncChangedDataIfDue();
+      }
+    } catch (_) {
+      // Keep local data intact; retry at the next foreground check.
+    } finally {
+      _backupCheckRunning = false;
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _backupTimer?.cancel();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _runAutoBackup();
+    if (state == AppLifecycleState.resumed) {
+      _runAutoBackup();
+      _checkChangedData();
+    }
   }
 
   Future<void> _runAutoBackup() async {
