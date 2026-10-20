@@ -38,6 +38,52 @@ class GoogleDriveBackupService {
   static const _sheetName = 'MPWindows CRM Online';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: _scopes);
+  bool _syncing = false;
+
+  // Only runs while the app is active. Failed uploads remain pending.
+  Future<bool> syncChangedDataIfDue() async {
+    if (_syncing || !await autoBackupEnabled) return false;
+    final email = await DatabaseService.instance.getSetting('drive_backup_email');
+    if (email == null || email.isEmpty) return false;
+    final account = await _googleSignIn.signInSilently();
+    if (account == null || account.email != email) return false;
+
+    final db = DatabaseService.instance;
+    final revision = await db.getBackupRevision();
+    final jsonRevision = int.tryParse(await db.getSetting('drive_backup_revision') ?? '') ?? -1;
+    final sheetsRevision = int.tryParse(await db.getSetting('sheets_backup_revision') ?? '') ?? -1;
+    if (revision == jsonRevision && revision == sheetsRevision) return false;
+
+    // Debounce at the caller; serialize uploads and preserve failed revisions.
+    _syncing = true;
+    var changed = false;
+    try {
+      if (revision != jsonRevision) {
+        try {
+          await backupToDrive();
+          await db.setSetting('drive_backup_revision', '$revision');
+          await db.setSetting('drive_backup_last_error', '');
+          changed = true;
+        } catch (error) {
+          await db.setSetting('drive_backup_last_error', '$error');
+        }
+      }
+      if (revision != sheetsRevision) {
+        try {
+          await syncToGoogleSheets();
+          await db.setSetting('sheets_backup_revision', '$revision');
+          await db.setSetting('sheets_backup_last_error', '');
+          changed = true;
+        } catch (error) {
+          await db.setSetting('sheets_backup_last_error', '$error');
+        }
+      }
+      return changed;
+    } finally {
+      _syncing = false;
+    }
+  }
+
 
   GoogleSignInAccount? get currentUser => _googleSignIn.currentUser;
 
