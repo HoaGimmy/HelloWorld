@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MPWindows CRM | Đăng nhập</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#19252a;background:#f2f5f4}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center}
+main{width:min(460px,calc(100% - 32px));background:white;padding:36px;border-radius:22px;box-shadow:0 12px 48px #17322b14}
+h1{margin:0 0 6px;font-size:28px}p{color:#66746d;line-height:1.55}
+small{color:#69766f}button{border:0;border-radius:12px;padding:13px 18px;font-size:15px;font-weight:700;cursor:pointer;background:#155e4c;color:white;width:100%;margin:8px 0}
+button.secondary{background:#e8efeb;color:#174f41}button:disabled{opacity:.5}
+#message{white-space:pre-wrap;font-size:14px}#session{display:none}strong{color:#183f33}
+</style></head>
+<body><main><h1>MPWindows CRM</h1><p>Trung thực dẫn đầu - cửa sáng bền lâu.</p>
+<section id="login"><h2>Đăng nhập quản trị</h2><p>Đăng nhập bằng tài khoản Google đã được chỉ định.</p>
+<button id="google">Tiếp tục với Google</button></section>
+<section id="session"><h2>Đã xác thực Google</h2><p id="identity"></p><p id="message"></p><button class="secondary" id="logout">Đăng xuất</button></section>
+<p id="status" role="status"></p><small>Phiên bản thử nghiệm đăng nhập. Chưa bật đồng bộ hoặc sửa dữ liệu iPhone.</small></main>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+const url='https://iikppjjszfcqskkfeydk.supabase.co';
+const key='sb_publishable_4lTJHWMvtXoatUcaJkEk_g_Wthu7m0g';
+const owner='hoa171996@gmail.com';
+const client=createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const $=id=>document.getElementById(id);
+function status(s){$('status').textContent=s}
+async function render(){
+ const {data:{session},error}=await client.auth.getSession();
+ if(error)status('Không kiểm tra được phiên đăng nhập: '+error.message);
+ const user=session?.user;
+ $('login').style.display=user?'none':'block';$('session').style.display=user?'block':'none';
+ if(!user)return;
+ const email=(user.email||'').toLowerCase();
+ $('identity').textContent='Tài khoản: '+email;
+ if(email!==owner){$('message').textContent='Tài khoản này không được phép sử dụng MPWindows CRM.';await client.auth.signOut();return render();}
+ const {data, error:readError}=await client.from('crm_records').select('id',{count:'exact',head:true});
+ $('message').textContent=readError?'Đăng nhập thành công, nhưng quyền dữ liệu chưa được cấp: '+readError.message:'Đăng nhập thành công. Tài khoản sẽ chỉ được sử dụng CRM khi đã xác nhận quyền chủ sở hữu trên máy chủ.';
+}
+$('google').onclick=async()=>{
+ status('Đang chuyển sang Google...');
+ const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+ if(error)status(error.message);
+};
+$('logout').onclick=async()=>{await client.auth.signOut();status('Đã đăng xuất');render()};
+client.auth.onAuthStateChange(()=>{setTimeout(render,0)});
+render();
+</script></body></html>
