@@ -2,11 +2,20 @@
 
 This directory contains a standalone static login page. It is NOT the full CRM and must not be advertised as deployed or synced.
 
+## Cloudflare Pages
+- Project: `mpwindows-crm`
+- Production branch: `feature/crm-web-google-sync`
+- Framework: None
+- Build command: empty
+- Build output directory: `web-crm`
+- Expected URL after a successful deployment: https://mpwindows-crm.pages.dev
+- If Cloudflare shows a deployment of `main`, it is the wrong branch. Create a new deployment from the production branch, not a retry of an old `main` commit.
+
 ## First-time setup
 1. In Supabase Authentication > Providers > Google, save the Web OAuth client ID and secret. Never commit the secret.
-2. In Supabase Authentication > URL Configuration, add the exact deployed HTTPS web origin to Redirect URLs. Configure Site URL appropriately.
+2. In Supabase Authentication > URL Configuration, set Site URL to `https://mpwindows-crm.pages.dev` and add `https://mpwindows-crm.pages.dev/**` to Redirect URLs.
 3. In Google Cloud Audience, keep hoa171996@gmail.com in the OAuth test users list while app is in Testing.
-4. Deploy `web-crm/` as static assets (for example Cloudflare Pages), then sign in as hoa171996@gmail.com.
+4. Deploy `web-crm/` as static assets, then sign in as hoa171996@gmail.com.
 5. In Supabase SQL Editor, look up the authenticated user's UUID (do not guess it):
    `select id,email from auth.users where lower(email)='hoa171996@gmail.com';`
 6. After verifying that Google identity and UUID, assign single owner with:
