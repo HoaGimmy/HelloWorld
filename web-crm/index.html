@@ -1,47 +1,10 @@
-<!doctype html>
-<html lang="vi">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MPWindows CRM | Đăng nhập</title>
-<style>
-:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#19252a;background:#f2f5f4}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center}
-main{width:min(460px,calc(100% - 32px));background:white;padding:36px;border-radius:22px;box-shadow:0 12px 48px #17322b14}
-h1{margin:0 0 6px;font-size:28px}p{color:#66746d;line-height:1.55}
-small{color:#69766f}button{border:0;border-radius:12px;padding:13px 18px;font-size:15px;font-weight:700;cursor:pointer;background:#155e4c;color:white;width:100%;margin:8px 0}
-button.secondary{background:#e8efeb;color:#174f41}button:disabled{opacity:.5}
-#message{white-space:pre-wrap;font-size:14px}#session{display:none}strong{color:#183f33}
-</style></head>
-<body><main><h1>MPWindows CRM</h1><p>Trung thực dẫn đầu - cửa sáng bền lâu.</p>
-<section id="login"><h2>Đăng nhập quản trị</h2><p>Đăng nhập bằng tài khoản Google đã được chỉ định.</p>
-<button id="google">Tiếp tục với Google</button></section>
-<section id="session"><h2>Đã xác thực Google</h2><p id="identity"></p><p id="message"></p><button class="secondary" id="logout">Đăng xuất</button></section>
-<p id="status" role="status"></p><small>Phiên bản thử nghiệm đăng nhập. Chưa bật đồng bộ hoặc sửa dữ liệu iPhone.</small></main>
-<script type="module">
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
-const url='https://iikppjjszfcqskkfeydk.supabase.co';
-const key='sb_publishable_4lTJHWMvtXoatUcaJkEk_g_Wthu7m0g';
-const owner='hoa171996@gmail.com';
-const client=createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const $=id=>document.getElementById(id);
-function status(s){$('status').textContent=s}
-async function render(){
- const {data:{session},error}=await client.auth.getSession();
- if(error)status('Không kiểm tra được phiên đăng nhập: '+error.message);
- const user=session?.user;
- $('login').style.display=user?'none':'block';$('session').style.display=user?'block':'none';
- if(!user)return;
- const email=(user.email||'').toLowerCase();
- $('identity').textContent='Tài khoản: '+email;
- if(email!==owner){$('message').textContent='Tài khoản này không được phép sử dụng MPWindows CRM.';await client.auth.signOut();return render();}
- const {data, error:readError}=await client.from('crm_records').select('id',{count:'exact',head:true});
- $('message').textContent=readError?'Đăng nhập thành công, nhưng quyền dữ liệu chưa được cấp: '+readError.message:'Đăng nhập thành công. Tài khoản sẽ chỉ được sử dụng CRM khi đã xác nhận quyền chủ sở hữu trên máy chủ.';
-}
-$('google').onclick=async()=>{
- status('Đang chuyển sang Google...');
- const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
- if(error)status(error.message);
-};
-$('logout').onclick=async()=>{await client.auth.signOut();status('Đã đăng xuất');render()};
-client.auth.onAuthStateChange(()=>{setTimeout(render,0)});
-render();
-</script></body></html>
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#155e4c"><title>MPWindows CRM</title><link rel="stylesheet" href="style.css"></head>
+<body><header><div><b>MP WINDOWS</b><small>Trung thực dẫn đầu - cửa sáng bền lâu.</small></div><button id="logout" hidden>Đăng xuất</button></header>
+<p id="status" role="status" aria-live="polite">Đang kiểm tra phiên đăng nhập…</p>
+<section id="login" class="panel"><h1>Quản lý khách hàng<br>ở bất cứ đâu.</h1><p>Khách hàng, công trình và công nợ trong cùng một nơi.</p><button id="google">Tiếp tục với Google</button><p>Chỉ tài khoản chủ sở hữu đã được cấp quyền mới truy cập được dữ liệu.</p></section>
+<main id="app" hidden><nav id="nav" aria-label="Chức năng CRM"></nav><section class="workspace"><div class="heading"><div><small id="identity"></small><h1 id="title">Tổng quan</h1></div><button id="refresh">Làm mới</button></div>
+<div id="dashboard"></div><div id="toolbar" hidden><input id="search" type="search" placeholder="Tìm tên, số điện thoại, địa chỉ…" aria-label="Tìm kiếm"><input id="period" type="month" aria-label="Lọc tháng năm"><button id="add">+ Thêm mới</button></div><div id="list"></div>
+<section id="backup" class="panel" hidden><h2>Chuyển dữ liệu iPhone</h2><p>App iPhone hiện tại chưa có đồng bộ Supabase tự động. Có thể nhập bản sao lưu JSON từ iPhone vào Web. Dữ liệu có sẵn sẽ được giữ nguyên.</p><p>Ảnh và file đính kèm trên iPhone chưa được tải lên; bản JSON chỉ giữ đường dẫn.</p><label>Tên nguồn cố định (ví dụ iphone-hoa)<input id="device" value="iphone-hoa" maxlength="100" pattern="[a-zA-Z0-9_-]+"></label><label>Chọn bản sao lưu JSON<input type="file" id="file" accept=".json,application/json"></label><pre id="preview"></pre><button id="import" disabled>Nhập gộp vào Web</button><hr><button id="export">Xuất JSON tương thích iPhone</button><p>Khi đưa file Web vào iPhone, dùng “Nhập dữ liệu & gộp”. Không dùng khôi phục thay thế. App hiện tại chưa chống trùng khi nhập gộp nhiều lần; hãy sao lưu trước và kiểm tra số lượng sau khi nhập.</p></section>
+</section></main>
+<dialog id="editor"><form id="form"><div class="heading"><h2 id="form-title"></h2><button type="button" id="close" aria-label="Đóng">✕</button></div><div id="fields"></div><p id="form-error" role="alert"></p><button id="save" type="submit">Lưu dữ liệu</button><p>Thay đổi được lưu lên cloud khi có mạng.</p></form></dialog>
+<script type="module" src="app.js"></script></body></html>

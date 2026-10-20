@@ -1,0 +1,19 @@
+name: CRM Web checks
+on:
+  push:
+    branches: [feature/crm-web-google-sync]
+    paths: ['web-crm/**', 'supabase/web-*.sql', '.github/workflows/crm-web-checks.yml']
+  pull_request:
+    paths: ['web-crm/**', 'supabase/web-security.sql', '.github/workflows/crm-web-checks.yml']
+  workflow_dispatch:
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --prefix web-crm
+      - run: node --check web-crm/app.js
+      - run: node --test web-crm/tests/*.test.js
