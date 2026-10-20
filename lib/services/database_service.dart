@@ -17,6 +17,7 @@ class DatabaseService {
     return openDatabase(
       path,
       version: 10,
+      onOpen: _installChangeTracking,
       onCreate: (db, _) async {
         await db.execute(
           'CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,phone TEXT,zalo TEXT,address TEXT,source TEXT,stage TEXT,need TEXT,budget REAL DEFAULT 0,note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)',
@@ -45,6 +46,23 @@ class DatabaseService {
         if (oldVersion < 10) await _upgradeAppointmentsV10(db);
       },
     );
+  }
+
+  static Future<void> _installChangeTracking(Database db) async {
+    await db.execute('CREATE TABLE IF NOT EXISTS backup_change_state (id INTEGER PRIMARY KEY CHECK(id = 1), revision INTEGER NOT NULL DEFAULT 0, changed_at TEXT)');
+    await db.execute('INSERT OR IGNORE INTO backup_change_state(id, revision) VALUES (1, 0)');
+    for (final table in backupTables.where((name) => name != 'app_settings')) {
+      for (final action in ['INSERT', 'UPDATE', 'DELETE']) {
+        final trigger = 'backup_track_${table}_${action.toLowerCase()}';
+        await db.execute('CREATE TRIGGER IF NOT EXISTS $trigger AFTER $action ON $table BEGIN UPDATE backup_change_state SET revision = revision + 1, changed_at = strftime(\'%Y-%m-%dT%H:%M:%f\', \'now\') WHERE id = 1; END');
+      }
+    }
+  }
+
+  Future<int> getBackupRevision() async {
+    final database = await db;
+    final rows = await database.rawQuery('SELECT revision FROM backup_change_state WHERE id = 1');
+    return (rows.first['revision'] as int?) ?? 0;
   }
 
   static Future<void> _upgradeAppointmentsV10(Database db) async {
