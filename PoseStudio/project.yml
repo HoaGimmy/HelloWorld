@@ -1,0 +1,24 @@
+name: POSEStudio
+options:
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+targets:
+  POSEStudio:
+    type: application
+    platform: iOS
+    sources:
+      - POSEStudio
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: vn.posestudio.app
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: "POSE STUDIO"
+        INFOPLIST_KEY_NSCameraUsageDescription: "Ứng dụng cần Camera để hướng dẫn tạo dáng và chụp ảnh."
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Ứng dụng cần quyền lưu ảnh chụp vào thư viện Ảnh."
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
