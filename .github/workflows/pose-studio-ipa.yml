@@ -6,6 +6,12 @@ on:
     paths:
       - 'PoseStudio/**'
       - '.github/workflows/pose-studio-ipa.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'PoseStudio/**'
+      - '.github/workflows/pose-studio-ipa.yml'
   workflow_dispatch:
 jobs:
   build:
