@@ -1,0 +1,37 @@
+name: Build POSE STUDIO IPA
+on:
+  push:
+    branches:
+      - pose-studio-ios
+    paths:
+      - 'PoseStudio/**'
+      - '.github/workflows/pose-studio-ipa.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: PoseStudio
+        run: xcodegen generate --spec project.yml
+      - name: Build unsigned iOS app
+        working-directory: PoseStudio
+        run: |
+          xcodebuild -project POSEStudio.xcodeproj -scheme POSEStudio -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Package IPA
+        working-directory: PoseStudio
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/POSEStudio.app Payload/
+          zip -qry POSEStudio_unsigned.ipa Payload
+          test -s POSEStudio_unsigned.ipa
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: POSEStudio_unsigned_ipa
+          path: PoseStudio/POSEStudio_unsigned.ipa
+          retention-days: 30
